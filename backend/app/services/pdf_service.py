@@ -1,0 +1,140 @@
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from typing import Dict, List, Any
+import os
+
+class PDFReportService:
+    def __init__(self):
+        self.styles = getSampleStyleSheet()
+        
+    def create_security_report(self, assessment_data: Dict, recommendations: List[Dict], output_path: str) -> str:
+        """Create a PDF security assessment report"""
+        
+        doc = SimpleDocTemplate(
+            output_path,
+            pagesize=letter,
+            rightMargin=72,
+            leftMargin=72,
+            topMargin=72,
+            bottomMargin=18
+        )
+        
+        story = []
+        
+        # Title
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=self.styles['Heading1'],
+            fontSize=18,
+            spaceAfter=30,
+            alignment=1,  # Center aligned
+            textColor=colors.HexColor('#1a365d')
+        )
+        
+        story.append(Paragraph("Security Assessment Report", title_style))
+        story.append(Spacer(1, 0.2*inch))
+        
+        # Business Information
+        story.append(Paragraph("Business Overview", self.styles['Heading2']))
+        business_info = [
+            ["Business Name:", assessment_data.get('business_name', 'Not provided')],
+            ["Business Type:", assessment_data.get('business_type', 'Not provided')],
+            ["Employee Count:", assessment_data.get('employee_count', 'Not provided')]
+        ]
+        
+        business_table = Table(business_info, colWidths=[2*inch, 4*inch])
+        business_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f7fafc')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ]))
+        
+        story.append(business_table)
+        story.append(Spacer(1, 0.3*inch))
+        
+        # Risk Assessment Results
+        risk_level = assessment_data['risk_level']
+        risk_score = assessment_data['risk_score']
+        
+        # Risk level color
+        risk_colors = {
+            'low': '#48bb78',
+            'medium': '#ecc94b', 
+            'high': '#ed8936',
+            'critical': '#e53e3e'
+        }
+        
+        story.append(Paragraph("Risk Assessment Summary", self.styles['Heading2']))
+        risk_info = [
+            ["Overall Risk Score:", f"{risk_score:.1f}%"],
+            ["Risk Level:", risk_level.upper()],
+            ["Questions Answered:", str(assessment_data['total_questions_answered'])]
+        ]
+        
+        risk_table = Table(risk_info, colWidths=[2*inch, 4*inch])
+        risk_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f7fafc')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('BACKGROUND', (1, 1), (1, 1), colors.HexColor(risk_colors.get(risk_level, '#cbd5e0'))),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
+        story.append(risk_table)
+        story.append(Spacer(1, 0.3*inch))
+        
+        # Security Recommendations
+        story.append(Paragraph("Security Recommendations", self.styles['Heading2']))
+        
+        for i, rec in enumerate(recommendations, 1):
+            # Priority color
+            priority_colors = {
+                'critical': '#e53e3e',
+                'high': '#ed8936',
+                'medium': '#ecc94b',
+                'low': '#48bb78'
+            }
+            
+            rec_text = f"<b>{i}. {rec['title']}</b> [Priority: {rec['priority'].upper()}]<br/>" \
+                      f"{rec['description']}<br/>" \
+                      f"<i>Category: {rec['category'].replace('_', ' ').title()}</i>"
+            
+            rec_style = ParagraphStyle(
+                f'RecStyle{i}',
+                parent=self.styles['Normal'],
+                leftIndent=20,
+                spaceAfter=12,
+                borderPadding=5,
+                backgroundColor=colors.HexColor('#f7fafc')
+            )
+            
+            story.append(Paragraph(rec_text, rec_style))
+        
+        story.append(Spacer(1, 0.3*inch))
+        
+        # Footer note
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=self.styles['Normal'],
+            fontSize=9,
+            textColor=colors.gray,
+            alignment=1
+        )
+        
+        story.append(Paragraph(
+            "Generated by NaijaBiz Shield - Digital Resilience Platform for Nigerian SMEs", 
+            footer_style
+        ))
+        
+        # Build PDF
+        doc.build(story)
+        return output_path

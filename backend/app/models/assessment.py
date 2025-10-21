@@ -1,0 +1,29 @@
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Float
+from sqlalchemy.sql import func
+from app.core.database import Base
+
+class SecurityAssessment(Base):
+    __tablename__ = "security_assessments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    business_name = Column(String(255), nullable=True)
+    business_type = Column(String(100), nullable=True)
+    employee_count = Column(String(50), nullable=True)
+    risk_score = Column(Float, default=0.0)
+    risk_level = Column(String(50), default="low")  # low, medium, high, critical
+    assessment_data = Column(JSON)  # Store all question answers
+    recommendations = Column(JSON)  # Store generated recommendations
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class ThreatAlert(Base):
+    __tablename__ = "threat_alerts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    severity = Column(String(50), default="medium")  # low, medium, high, critical
+    category = Column(String(100), nullable=False)  # phishing, malware, fraud, etc.
+    region = Column(String(100), default="nigeria")
+    is_active = Column(Integer, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -1,1 +1,1 @@
-# NaijaBiz Shield
+Repo initialized

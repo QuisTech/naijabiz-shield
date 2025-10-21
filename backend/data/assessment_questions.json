@@ -1,0 +1,107 @@
+{
+  "sections": [
+    {
+      "id": "business_profile",
+      "title": "Business Profile",
+      "questions": [
+        {
+          "id": "business_type",
+          "question": "What type of business do you operate?",
+          "type": "select",
+          "options": [
+            {"value": "retail", "label": "Retail/Shop"},
+            {"value": "service", "label": "Service Business"},
+            {"value": "ecommerce", "label": "E-commerce"},
+            {"value": "manufacturing", "label": "Manufacturing"},
+            {"value": "other", "label": "Other"}
+          ],
+          "risk_weight": 0.1
+        },
+        {
+          "id": "employee_count",
+          "question": "How many employees do you have?",
+          "type": "select",
+          "options": [
+            {"value": "1-5", "label": "1-5 employees"},
+            {"value": "6-20", "label": "6-20 employees"},
+            {"value": "21-50", "label": "21-50 employees"},
+            {"value": "50+", "label": "50+ employees"}
+          ],
+          "risk_weight": 0.15
+        }
+      ]
+    },
+    {
+      "id": "digital_presence",
+      "title": "Digital Presence",
+      "questions": [
+        {
+          "id": "has_website",
+          "question": "Do you have a business website?",
+          "type": "radio",
+          "options": [
+            {"value": "yes", "label": "Yes"},
+            {"value": "no", "label": "No"}
+          ],
+          "risk_weight": 0.2
+        },
+        {
+          "id": "online_payments",
+          "question": "Do you accept online payments?",
+          "type": "radio",
+          "options": [
+            {"value": "yes", "label": "Yes"},
+            {"value": "no", "label": "No"}
+          ],
+          "risk_weight": 0.3
+        },
+        {
+          "id": "social_media",
+          "question": "Do you use social media for business?",
+          "type": "radio",
+          "options": [
+            {"value": "yes", "label": "Yes"},
+            {"value": "no", "label": "No"}
+          ],
+          "risk_weight": 0.15
+        }
+      ]
+    },
+    {
+      "id": "security_practices",
+      "title": "Security Practices",
+      "questions": [
+        {
+          "id": "data_backup",
+          "question": "Do you regularly backup your business data?",
+          "type": "radio",
+          "options": [
+            {"value": "yes", "label": "Yes"},
+            {"value": "no", "label": "No"}
+          ],
+          "risk_weight": 0.25
+        },
+        {
+          "id": "two_factor",
+          "question": "Do you use two-factor authentication for important accounts?",
+          "type": "radio",
+          "options": [
+            {"value": "yes", "label": "Yes"},
+            {"value": "no", "label": "No"}
+          ],
+          "risk_weight": 0.2
+        },
+        {
+          "id": "employee_training",
+          "question": "Do you provide cybersecurity training to employees?",
+          "type": "radio",
+          "options": [
+            {"value": "yes", "label": "Yes"},
+            {"value": "no", "label": "No"}
+          ],
+          "risk_weight": 0.15
+        }
+      ]
+    }
+  ]
+}
