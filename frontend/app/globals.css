@@ -61,3 +61,14 @@
     @apply bg-red-900 text-red-300;
   }
 }
+
+/* Your custom brand colors */
+.bg-brand-primary { background-color: #d74622; }
+.text-brand-primary { color: #d74622; }
+.border-brand-primary { border-color: #d74622; }
+
+.bg-brand-secondary { background-color: #76127f; }
+.text-brand-secondary { color: #76127f; }
+
+.bg-brand-accent { background-color: #0c22f1; }
+.text-brand-accent { color: #0c22f1; }
