@@ -1,0 +1,516 @@
+
+
+// ===== FILE: frontend/app/globals.css =====
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-[#111e2f] text-gray-100;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#111e2f];
+  }
+  
+  .btn-primary {
+    @apply bg-[#d74622] text-white hover:bg-[#c13a18] focus:ring-[#d74622] shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-[#1a2d44] text-gray-100 hover:bg-[#223553] focus:ring-[#2d3748] border border-[#2d3748];
+  }
+  
+  .btn-outline {
+    @apply border-2 border-[#d74622] text-[#d74622] hover:bg-[#d74622] hover:text-white focus:ring-[#d74622];
+  }
+  
+  .card {
+    @apply bg-[#1a2d44] rounded-xl shadow-xl border border-[#2d3748] p-6 backdrop-blur-sm;
+  }
+  
+  .nav-link {
+    @apply text-gray-300 hover:text-white transition-colors duration-200;
+  }
+
+  .hero-gradient {
+    background: linear-gradient(135deg, #dd020f 0%, #76127f 50%, #0c22f1 100%);
+  }
+
+  .risk-badge {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .risk-low {
+    @apply bg-green-900 text-green-300;
+  }
+  
+  .risk-medium {
+    @apply bg-yellow-900 text-yellow-300;
+  }
+  
+  .risk-high {
+    @apply bg-orange-900 text-orange-300;
+  }
+  
+  .risk-critical {
+    @apply bg-red-900 text-red-300;
+  }
+}
+
+// ===== FILE: frontend/app/layout.tsx =====
+
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'NaijaBiz Shield - Nigerian SME Digital Resilience Platform',
+  description: 'Protect your Nigerian business from digital threats with our comprehensive security assessment and tools.',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en"> {/* Remove className="dark" */}
+      <body className={inter.className}>
+        <div className="min-h-screen">
+          {children}
+        </div>
+      </body>
+    </html>
+  )
+}
+
+// ===== FILE: frontend/app/page.tsx =====
+
+'use client'
+
+import Link from 'next/link'
+import { Shield, AlertTriangle, FileText, TrendingUp, ArrowRight } from 'lucide-react'
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gray-900">
+      {/* Navigation */}
+      <nav className="bg-gray-800 shadow-xl border-b border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-blue-400" />
+              <span className="ml-2 text-xl font-bold text-white">NaijaBiz Shield</span>
+            </div>
+            <div className="flex items-center space-x-6">
+              <Link href="/security-assessment" className="nav-link">
+                Security Assessment
+              </Link>
+              <Link href="/threats" className="nav-link">
+                Threat Alerts
+              </Link>
+              <Link 
+                href="/security-assessment" 
+                className="btn btn-primary"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="hero-gradient py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Protect Your Nigerian Business from 
+              <span className="text-blue-400"> Digital Threats</span>
+            </h1>
+            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+              NaijaBiz Shield helps Nigerian SMEs identify security risks, get personalized recommendations, 
+              and build resilience against cyber attacks tailored to our local context.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/security-assessment" 
+                className="btn btn-primary text-lg px-8 py-3 flex items-center justify-center"
+              >
+                Start Security Assessment
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link 
+                href="/threats" 
+                className="btn btn-secondary text-lg px-8 py-3"
+              >
+                View Current Threats
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              How NaijaBiz Shield Protects Your Business
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Our platform is specifically designed for Nigerian SMEs facing unique digital challenges.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="card text-center hover:border-blue-500 transition-colors duration-200">
+              <div className="w-12 h-12 bg-blue-900 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <FileText className="h-6 w-6 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Security Assessment</h3>
+              <p className="text-gray-300">
+                Complete a 10-minute assessment to identify your business's specific security vulnerabilities.
+              </p>
+            </div>
+
+            <div className="card text-center hover:border-orange-500 transition-colors duration-200">
+              <div className="w-12 h-12 bg-orange-900 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-6 w-6 text-orange-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Threat Intelligence</h3>
+              <p className="text-gray-300">
+                Stay updated on the latest digital threats targeting Nigerian businesses.
+              </p>
+            </div>
+
+            <div className="card text-center hover:border-green-500 transition-colors duration-200">
+              <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="h-6 w-6 text-green-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Actionable Insights</h3>
+              <p className="text-gray-300">
+                Get personalized recommendations and step-by-step guidance to improve your security.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-gray-900 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Secure Your Business?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Join hundreds of Nigerian SMEs who have already protected their businesses with our free assessment.
+          </p>
+          <Link 
+            href="/security-assessment" 
+            className="btn btn-primary text-lg px-8 py-3 inline-block"
+          >
+            Start Free Assessment
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 border-t border-gray-700 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center mb-4 md:mb-0">
+              <Shield className="h-6 w-6 text-blue-400" />
+              <span className="ml-2 text-lg font-semibold text-white">NaijaBiz Shield</span>
+            </div>
+            <div className="text-gray-400">
+              &copy; 2024 NaijaBiz Shield. Built for Nigerian SMEs.
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+// ===== FILE: frontend/app/security-assessment/page.tsx =====
+
+'use client';
+
+import Link from 'next/link';
+import { Shield, ArrowLeft } from 'lucide-react';
+import { useAssessment } from '@/hooks/use-assessment';
+import { AssessmentForm } from '@/components/assessment/AssessmentForm';
+import { AssessmentResults } from '@/components/assessment/AssessmentResults';
+
+export default function SecurityAssessment() {
+  const { 
+    questions, 
+    loading, 
+    error, 
+    result, 
+    submitAssessment, 
+    downloadReport, 
+    resetAssessment 
+  } = useAssessment();
+
+  const handleSubmitAssessment = async (businessName: string, answers: any) => {
+    await submitAssessment(businessName, answers);
+  };
+
+  const handleDownloadReport = async (assessmentId: number) => {
+    await downloadReport(assessmentId);
+  };
+
+  const handleRestart = () => {
+    resetAssessment();
+  };
+
+  if (error && !questions) {
+    return (
+      <div className="min-h-screen bg-white">
+        <nav className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex items-center">
+                <Link href="/" className="flex items-center">
+                  <Shield className="h-8 w-8 text-[#d74622]" />
+                  <span className="ml-2 text-xl font-bold text-gray-900">NaijaBiz Shield</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <div className="max-w-2xl mx-auto py-16 px-4 text-center">
+          <div className="card">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Assessment</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/" className="btn-secondary">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Link>
+              <button onClick={() => window.location.reload()} className="btn-primary">
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center">
+                <Shield className="h-8 w-8 text-[#d74622]" />
+                <span className="ml-2 text-xl font-bold text-gray-900">NaijaBiz Shield</span>
+              </Link>
+            </div>
+            <div className="flex items-center space-x-6">
+              <Link href="/" className="nav-link flex items-center">
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {result ? (
+            <AssessmentResults
+              result={result}
+              onDownloadReport={handleDownloadReport}
+              onRestart={handleRestart}
+              downloadLoading={loading}
+            />
+          ) : questions ? (
+            <AssessmentForm
+              sections={questions.sections}
+              onSubmit={handleSubmitAssessment}
+              loading={loading}
+            />
+          ) : (
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="card">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d74622] mx-auto mb-4"></div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Assessment</h2>
+                <p className="text-gray-600">Preparing your security questions...</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ===== FILE: frontend/app/threats/page.tsx =====
+
+'use client'
+
+import Link from 'next/link'
+import { Shield, AlertTriangle, FileText, TrendingUp, ArrowRight } from 'lucide-react'
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation - White Theme */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-[#d74622]" />
+              <span className="ml-2 text-xl font-bold text-gray-900">NaijaBiz Shield</span>
+            </div>
+            <div className="flex items-center space-x-6">
+              <Link href="/security-assessment" className="nav-link">
+                Security Assessment
+              </Link>
+              <Link href="/threats" className="nav-link">
+                Threat Alerts
+              </Link>
+              <Link 
+                href="/security-assessment" 
+                className="btn btn-primary"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section - With Background Color */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              Protect Your Nigerian Business from 
+              <span className="text-[#d74622]"> Digital Threats</span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              NaijaBiz Shield helps Nigerian SMEs identify security risks, get personalized recommendations, 
+              and build resilience against cyber attacks tailored to our local context.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/security-assessment" 
+                className="btn btn-primary text-lg px-8 py-3 flex items-center justify-center"
+              >
+                Start Security Assessment
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+              <Link 
+                href="/threats" 
+                className="btn btn-secondary text-lg px-8 py-3"
+              >
+                View Current Threats
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - With Background Color */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              How NaijaBiz Shield Protects Your Business
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Our platform is specifically designed for Nigerian SMEs facing unique digital challenges.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="card text-center hover:shadow-lg transition-shadow duration-200">
+              <div className="w-12 h-12 bg-[#d74622]/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <FileText className="h-6 w-6 text-[#d74622]" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Security Assessment</h3>
+              <p className="text-gray-600">
+                Complete a 10-minute assessment to identify your business's specific security vulnerabilities.
+              </p>
+            </div>
+
+            <div className="card text-center hover:shadow-lg transition-shadow duration-200">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Threat Intelligence</h3>
+              <p className="text-gray-600">
+                Stay updated on the latest digital threats targeting Nigerian businesses.
+              </p>
+            </div>
+
+            <div className="card text-center hover:shadow-lg transition-shadow duration-200">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Actionable Insights</h3>
+              <p className="text-gray-600">
+                Get personalized recommendations and step-by-step guidance to improve your security.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section - With Your Gradient */}
+      <section className="py-16 bg-gradient-to-r from-[#dd020f] via-[#76127f] to-[#0c22f1] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to Secure Your Business?
+          </h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+            Join hundreds of Nigerian SMEs who have already protected their businesses with our free assessment.
+          </p>
+          <Link 
+            href="/security-assessment" 
+            className="btn bg-white text-gray-900 hover:bg-gray-100 text-lg px-8 py-3 inline-block"
+          >
+            Start Free Assessment
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center mb-4 md:mb-0">
+              <Shield className="h-6 w-6 text-[#d74622]" />
+              <span className="ml-2 text-lg font-semibold">NaijaBiz Shield</span>
+            </div>
+            <div className="text-gray-400">
+              &copy; 2024 NaijaBiz Shield. Built for Nigerian SMEs.
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}

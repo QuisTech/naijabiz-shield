@@ -1,0 +1,673 @@
+
+
+// ==== backend/app/api/reports.py ====
+
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/stats")
+async def get_assessment_stats():
+    """Get overall assessment statistics"""
+    # This would typically query the database
+    return {
+        "success": True,
+        "data": {
+            "total_assessments": 150,
+            "average_risk_score": 42.5,
+            "risk_distribution": {
+                "low": 35,
+                "medium": 45,
+                "high": 15,
+                "critical": 5
+            }
+        }
+    }
+
+// ==== backend/app/api/security_assessment.py ====
+
+import os
+from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi.responses import FileResponse
+import json
+from typing import Dict, Any
+import uuid
+import os
+from pathlib import Path
+
+from app.services.assessment_service import SecurityAssessmentService
+from app.services.pdf_service import PDFReportService
+from app.models.assessment import SecurityAssessment
+from app.core.database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+
+router = APIRouter()
+assessment_service = SecurityAssessmentService()
+pdf_service = PDFReportService()
+
+@router.get("/questions")
+async def get_assessment_questions():
+    """Get all security assessment questions"""
+    try:
+        questions = assessment_service.get_assessment_questions()
+        return {
+            "success": True,
+            "data": questions,
+            "message": "Assessment questions loaded successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading questions: {str(e)}")
+
+@router.get("/threats")
+async def get_current_threats():
+    """Get current security threats for Nigerian businesses"""
+    try:
+        threats = assessment_service.get_current_threats()
+        return {
+            "success": True,
+            "data": threats,
+            "message": "Current threats loaded successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading threats: {str(e)}")
+
+@router.post("/assess")
+async def submit_assessment(assessment_data: Dict[str, Any], db: AsyncSession = Depends(get_db)):
+    """Submit security assessment and get results"""
+    try:
+        # Calculate risk score
+        risk_result = await assessment_service.calculate_risk_score(assessment_data.get('answers', {}))
+        
+        # Generate recommendations
+        recommendations = await assessment_service.generate_recommendations(
+            assessment_data.get('answers', {}),
+            risk_result['risk_level']
+        )
+        
+        # Save to database (optional)
+        db_assessment = SecurityAssessment(
+            business_name=assessment_data.get('business_name'),
+            business_type=assessment_data.get('answers', {}).get('business_type'),
+            employee_count=assessment_data.get('answers', {}).get('employee_count'),
+            risk_score=risk_result['risk_score'],
+            risk_level=risk_result['risk_level'],
+            assessment_data=assessment_data.get('answers', {}),
+            recommendations=recommendations
+        )
+        
+        db.add(db_assessment)
+        await db.commit()
+        await db.refresh(db_assessment)
+        
+        return {
+            "success": True,
+            "data": {
+                "assessment_id": db_assessment.id,
+                "risk_assessment": risk_result,
+                "recommendations": recommendations,
+                "threat_alerts": assessment_service.get_current_threats()
+            },
+            "message": "Assessment completed successfully"
+        }
+        
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error processing assessment: {str(e)}")
+
+@router.get("/report/{assessment_id}")
+async def generate_pdf_report(assessment_id: int, db: AsyncSession = Depends(get_db)):
+    """Generate PDF report for an assessment"""
+    try:
+        # Get assessment from database using ORM
+        from app.models.assessment import SecurityAssessment
+        result = await db.execute(
+            select(SecurityAssessment).where(SecurityAssessment.id == assessment_id)
+        )
+        assessment = result.scalar_one_or_none()
+        
+        if not assessment:
+            raise HTTPException(status_code=404, detail="Assessment not found")
+        
+        # Create reports directory if it doesn't exist
+        reports_dir = Path("reports")
+        reports_dir.mkdir(exist_ok=True)
+        
+        # Generate PDF
+        output_path = reports_dir / f"security_report_{assessment_id}.pdf"
+        
+        assessment_data = {
+            'business_name': assessment.business_name,
+            'business_type': assessment.business_type,
+            'employee_count': assessment.employee_count,
+            'risk_score': assessment.risk_score,
+            'risk_level': assessment.risk_level,
+            'total_questions_answered': len(assessment.assessment_data) if assessment.assessment_data else 0
+        }
+        
+        # Generate the PDF
+        final_path = pdf_service.create_security_report(
+            assessment_data,
+            assessment.recommendations or [],
+            str(output_path)
+        )
+        
+        # Check if we got a PDF or fallback text file
+        if final_path.endswith('.pdf'):
+            return FileResponse(
+                path=final_path,
+                filename=f"NaijaBiz_Security_Report_{assessment_id}.pdf",
+                media_type='application/pdf'
+            )
+        else:
+            # Return text file if PDF failed
+            return FileResponse(
+                path=final_path,
+                filename=f"NaijaBiz_Security_Report_{assessment_id}.txt",
+                media_type='text/plain'
+            )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+
+@router.get("/assessments")
+async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
+    """Get recent security assessments"""
+    try:
+        from sqlalchemy import text
+        result = await db.execute(
+            text("SELECT id, business_name, risk_level, risk_score, created_at FROM security_assessments ORDER BY created_at DESC LIMIT 10")
+        )
+        assessments = result.fetchall()
+        
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": a.id,
+                    "business_name": a.business_name,
+                    "risk_level": a.risk_level,
+                    "risk_score": a.risk_score,
+                    "created_at": a.created_at.isoformat() if a.created_at else None
+                }
+                for a in assessments
+            ],
+            "message": "Recent assessments loaded successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading assessments: {str(e)}")
+
+// ==== backend/app/api/__init__.py ====
+
+# API routes
+
+// ==== backend/app/core/config.py ====
+
+from pydantic_settings import BaseSettings
+from typing import Optional
+import os
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "NaijaBiz Shield"
+    VERSION: str = "1.0.0"
+    API_V1_STR: str = "/api/v1"
+    
+    # Database
+    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/naijabiz_shield"
+    
+    # OpenAI
+    OPENAI_API_KEY: Optional[str] = None
+    
+    # Security
+    SECRET_KEY: str = "your-secret-key-change-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+settings = Settings()
+
+// ==== backend/app/core/database.py ====
+
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from app.core.config import settings
+
+# Use SQLite for development - no external database needed
+engine = create_async_engine(
+    "sqlite+aiosqlite:///./naijabiz_dev.db", 
+    connect_args={"check_same_thread": False},
+    echo=True  # Show SQL queries in console
+)
+
+AsyncSessionLocal = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
+
+Base = declarative_base()
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+// ==== backend/app/core/security.py ====
+
+
+
+// ==== backend/app/core/__init__.py ====
+
+# Core modules
+
+// ==== backend/app/main.py ====
+
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
+import os
+
+from app.core.config import settings
+from app.api import security_assessment, reports
+from app.core.database import engine, Base
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Create database tables
+    print("Creating database tables...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("Database tables created!")
+    yield
+    # Shutdown
+    await engine.dispose()
+
+app = FastAPI(
+    title="NaijaBiz Shield API",
+    description="Digital Resilience Platform for Nigerian SMEs",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(security_assessment.router, prefix="/api/v1/security", tags=["security"])
+app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Welcome to NaijaBiz Shield API",
+        "version": "1.0.0",
+        "docs": "/docs"
+    }
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "naijabiz-shield"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+// ==== backend/app/models/assessment.py ====
+
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Float
+from sqlalchemy.sql import func
+from app.core.database import Base
+
+class SecurityAssessment(Base):
+    __tablename__ = "security_assessments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    business_name = Column(String(255), nullable=True)
+    business_type = Column(String(100), nullable=True)
+    employee_count = Column(String(50), nullable=True)
+    risk_score = Column(Float, default=0.0)
+    risk_level = Column(String(50), default="low")  # low, medium, high, critical
+    assessment_data = Column(JSON)  # Store all question answers
+    recommendations = Column(JSON)  # Store generated recommendations
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class ThreatAlert(Base):
+    __tablename__ = "threat_alerts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    severity = Column(String(50), default="medium")  # low, medium, high, critical
+    category = Column(String(100), nullable=False)  # phishing, malware, fraud, etc.
+    region = Column(String(100), default="nigeria")
+    is_active = Column(Integer, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+// ==== backend/app/models/__init__.py ====
+
+# Database models
+
+// ==== backend/app/services/assessment_service.py ====
+
+import json
+import os
+from typing import Dict, List, Any
+from pathlib import Path
+
+class SecurityAssessmentService:
+    def __init__(self):
+        self.questions_data = self.load_questions()
+        self.threat_alerts = self.load_threat_alerts()
+
+    def load_questions(self) -> Dict:
+        """Load assessment questions from JSON file"""
+        questions_path = Path(__file__).parent.parent / "data" / "assessment_questions.json"
+        with open(questions_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def load_threat_alerts(self) -> List[Dict]:
+        """Load current threat alerts for Nigeria"""
+        return [
+            {
+                "id": 1,
+                "title": "WhatsApp Business Account Hijacking",
+                "description": "Scammers are targeting small business WhatsApp accounts to impersonate business owners and request payments from customers.",
+                "severity": "high",
+                "category": "social_engineering",
+                "recommendation": "Enable two-step verification on WhatsApp and educate customers about verified business accounts."
+            },
+            {
+                "id": 2,
+                "title": "Fake Bank Alert Scams",
+                "description": "Fraudsters are sending fake bank transfer alerts to businesses, especially for high-value transactions.",
+                "severity": "critical",
+                "category": "fraud",
+                "recommendation": "Always verify transactions through your bank's official app or by calling your bank directly."
+            }
+        ]
+
+    async def calculate_risk_score(self, answers: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate risk score based on assessment answers"""
+        total_score = 0.0
+        max_possible_score = 0.0
+        
+        # Calculate scores for each question
+        for section in self.questions_data["sections"]:
+            for question in section["questions"]:
+                qid = question["id"]
+                max_possible_score += question["risk_weight"]
+                
+                if qid in answers:
+                    answer = answers[qid]
+                    # Simple scoring logic - can be enhanced
+                    if question["type"] == "radio":
+                        if answer == "yes":
+                            total_score += question["risk_weight"]
+                    elif question["type"] == "select":
+                        # Higher risk for larger businesses
+                        if qid == "employee_count":
+                            if answer == "50+":
+                                total_score += question["risk_weight"]
+                            elif answer == "21-50":
+                                total_score += question["risk_weight"] * 0.75
+                            elif answer == "6-20":
+                                total_score += question["risk_weight"] * 0.5
+        
+        # Calculate percentage and determine risk level
+        risk_percentage = (total_score / max_possible_score) * 100 if max_possible_score > 0 else 0
+        
+        if risk_percentage < 25:
+            risk_level = "low"
+        elif risk_percentage < 50:
+            risk_level = "medium"
+        elif risk_percentage < 75:
+            risk_level = "high"
+        else:
+            risk_level = "critical"
+
+        return {
+            "risk_score": risk_percentage,
+            "risk_level": risk_level,
+            "total_questions_answered": len(answers)
+        }
+
+    async def generate_recommendations(self, answers: Dict[str, Any], risk_level: str) -> List[Dict]:
+        """Generate personalized security recommendations"""
+        recommendations = []
+        
+        # Basic recommendations for all businesses
+        base_recommendations = [
+            {
+                "priority": "high",
+                "title": "Enable Two-Factor Authentication",
+                "description": "Add an extra layer of security to your email and social media accounts.",
+                "category": "authentication"
+            },
+            {
+                "priority": "medium",
+                "title": "Regular Data Backups",
+                "description": "Backup important business data weekly to an external drive or cloud storage.",
+                "category": "data_protection"
+            }
+        ]
+        
+        # Context-specific recommendations
+        if answers.get("online_payments") == "yes":
+            recommendations.append({
+                "priority": "critical",
+                "title": "Payment Security Verification",
+                "description": "Always verify high-value transactions through multiple channels before delivering goods/services.",
+                "category": "financial"
+            })
+        
+        if answers.get("employee_count") in ["6-20", "21-50", "50+"]:
+            recommendations.append({
+                "priority": "medium",
+                "title": "Employee Security Training",
+                "description": "Conduct basic cybersecurity awareness training for all employees.",
+                "category": "education"
+            })
+        
+        # Add base recommendations
+        recommendations.extend(base_recommendations)
+        
+        # Sort by priority
+        priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        recommendations.sort(key=lambda x: priority_order[x["priority"]])
+        
+        return recommendations
+
+    def get_assessment_questions(self) -> Dict:
+        """Return all assessment questions"""
+        return self.questions_data
+
+    def get_current_threats(self) -> List[Dict]:
+        """Return current threat alerts for Nigeria"""
+        return self.threat_alerts
+
+// ==== backend/app/services/pdf_service.py ====
+
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from typing import Dict, List, Any
+import os
+
+class PDFReportService:
+    def __init__(self):
+        self.styles = getSampleStyleSheet()
+        
+    def create_security_report(self, assessment_data: Dict, recommendations: List[Dict], output_path: str) -> str:
+        """Create a PDF security assessment report"""
+        
+        try:
+            doc = SimpleDocTemplate(
+                output_path,
+                pagesize=letter,
+                rightMargin=72,
+                leftMargin=72,
+                topMargin=72,
+                bottomMargin=18
+            )
+            
+            story = []
+            
+            # Title
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=self.styles['Heading1'],
+                fontSize=18,
+                spaceAfter=30,
+                alignment=1,  # Center aligned
+                textColor=colors.HexColor('#1a365d')
+            )
+            
+            story.append(Paragraph("NaijaBiz Shield Security Report", title_style))
+            story.append(Spacer(1, 0.2*inch))
+            
+            # Business Information
+            story.append(Paragraph("Business Overview", self.styles['Heading2']))
+            business_info = [
+                ["Business Name:", assessment_data.get('business_name', 'Not provided')],
+                ["Business Type:", assessment_data.get('business_type', 'Not provided')],
+                ["Employee Count:", assessment_data.get('employee_count', 'Not provided')]
+            ]
+            
+            business_table = Table(business_info, colWidths=[2*inch, 4*inch])
+            business_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f7fafc')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ]))
+            
+            story.append(business_table)
+            story.append(Spacer(1, 0.3*inch))
+            
+            # Risk Assessment Results
+            risk_level = assessment_data['risk_level']
+            risk_score = assessment_data['risk_score']
+            
+            # Risk level color
+            risk_colors = {
+                'low': '#48bb78',
+                'medium': '#ecc94b', 
+                'high': '#ed8936',
+                'critical': '#e53e3e'
+            }
+            
+            story.append(Paragraph("Risk Assessment Summary", self.styles['Heading2']))
+            risk_info = [
+                ["Overall Risk Score:", f"{risk_score:.1f}%"],
+                ["Risk Level:", risk_level.upper()],
+                ["Questions Answered:", str(assessment_data['total_questions_answered'])]
+            ]
+            
+            risk_table = Table(risk_info, colWidths=[2*inch, 4*inch])
+            risk_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f7fafc')),
+                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 11),
+                ('BACKGROUND', (1, 1), (1, 1), colors.HexColor(risk_colors.get(risk_level, '#cbd5e0'))),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            
+            story.append(risk_table)
+            story.append(Spacer(1, 0.3*inch))
+            
+            # Security Recommendations
+            if recommendations:
+                story.append(Paragraph("Security Recommendations", self.styles['Heading2']))
+                
+                for i, rec in enumerate(recommendations, 1):
+                    # Priority color
+                    priority_colors = {
+                        'critical': '#e53e3e',
+                        'high': '#ed8936',
+                        'medium': '#ecc94b',
+                        'low': '#48bb78'
+                    }
+                    
+                    rec_text = f"<b>{i}. {rec['title']}</b> [Priority: {rec['priority'].upper()}]<br/>" \
+                              f"{rec['description']}<br/>" \
+                              f"<i>Category: {rec['category'].replace('_', ' ').title()}</i>"
+                    
+                    rec_style = ParagraphStyle(
+                        f'RecStyle{i}',
+                        parent=self.styles['Normal'],
+                        leftIndent=20,
+                        spaceAfter=12,
+                        borderPadding=5,
+                        backgroundColor=colors.HexColor('#f7fafc')
+                    )
+                    
+                    story.append(Paragraph(rec_text, rec_style))
+            
+            story.append(Spacer(1, 0.3*inch))
+            
+            # Footer note
+            footer_style = ParagraphStyle(
+                'Footer',
+                parent=self.styles['Normal'],
+                fontSize=9,
+                textColor=colors.gray,
+                alignment=1
+            )
+            
+            story.append(Paragraph(
+                "Generated by NaijaBiz Shield - Digital Resilience Platform for Nigerian SMEs", 
+                footer_style
+            ))
+            
+            # Build PDF
+            doc.build(story)
+            return output_path
+            
+        except Exception as e:
+            # If PDF generation fails, create a simple text file as fallback
+            print(f"PDF generation failed: {e}")
+            fallback_path = output_path.replace('.pdf', '.txt')
+            with open(fallback_path, 'w') as f:
+                f.write(f"NaijaBiz Shield Security Report\n")
+                f.write(f"Assessment ID: {assessment_data.get('business_name', 'N/A')}\n")
+                f.write(f"Risk Score: {risk_score}% - {risk_level.upper()} RISK\n")
+                f.write(f"\nRecommendations:\n")
+                for rec in recommendations:
+                    f.write(f"- {rec['title']} ({rec['priority']})\n")
+            return fallback_path
+
+// ==== backend/app/services/__init__.py ====
+
+
+
+// ==== backend/app/utils/security_rules.py ====
+
+
+
+// ==== backend/app/utils/__init__.py ====
+
+
+
+// ==== backend/app/__init__.py ====
+
+# NaijaBiz Shield Backend
+__version__ = "1.0.0"

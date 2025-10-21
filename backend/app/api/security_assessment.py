@@ -1,3 +1,5 @@
+import os
+from sqlalchemy import select
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import FileResponse
 import json
@@ -89,12 +91,12 @@ async def submit_assessment(assessment_data: Dict[str, Any], db: AsyncSession = 
 async def generate_pdf_report(assessment_id: int, db: AsyncSession = Depends(get_db)):
     """Generate PDF report for an assessment"""
     try:
-        # Get assessment from database
+        # Get assessment from database using ORM
+        from app.models.assessment import SecurityAssessment
         result = await db.execute(
-            "SELECT * FROM security_assessments WHERE id = :id", 
-            {"id": assessment_id}
+            select(SecurityAssessment).where(SecurityAssessment.id == assessment_id)
         )
-        assessment = result.fetchone()
+        assessment = result.scalar_one_or_none()
         
         if not assessment:
             raise HTTPException(status_code=404, detail="Assessment not found")
@@ -115,17 +117,27 @@ async def generate_pdf_report(assessment_id: int, db: AsyncSession = Depends(get
             'total_questions_answered': len(assessment.assessment_data) if assessment.assessment_data else 0
         }
         
-        pdf_service.create_security_report(
+        # Generate the PDF
+        final_path = pdf_service.create_security_report(
             assessment_data,
             assessment.recommendations or [],
             str(output_path)
         )
         
-        return FileResponse(
-            path=output_path,
-            filename=f"NaijaBiz_Security_Report_{assessment_id}.pdf",
-            media_type='application/pdf'
-        )
+        # Check if we got a PDF or fallback text file
+        if final_path.endswith('.pdf'):
+            return FileResponse(
+                path=final_path,
+                filename=f"NaijaBiz_Security_Report_{assessment_id}.pdf",
+                media_type='application/pdf'
+            )
+        else:
+            # Return text file if PDF failed
+            return FileResponse(
+                path=final_path,
+                filename=f"NaijaBiz_Security_Report_{assessment_id}.txt",
+                media_type='text/plain'
+            )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
@@ -134,9 +146,9 @@ async def generate_pdf_report(assessment_id: int, db: AsyncSession = Depends(get
 async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
     """Get recent security assessments"""
     try:
+        from sqlalchemy import text
         result = await db.execute(
-            "SELECT id, business_name, risk_level, risk_score, created_at " 
-            "FROM security_assessments ORDER BY created_at DESC LIMIT 10"
+            text("SELECT id, business_name, risk_level, risk_score, created_at FROM security_assessments ORDER BY created_at DESC LIMIT 10")
         )
         assessments = result.fetchall()
         

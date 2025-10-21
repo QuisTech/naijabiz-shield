@@ -1,0 +1,35 @@
+{
+  "sections": [
+    {
+      "id": "business_profile",
+      "title": "Business Profile",
+      "questions": [
+        {
+          "id": "business_type",
+          "question": "What type of business do you operate?",
+          "type": "select",
+          "options": [
+            {"value": "retail", "label": "Retail/Shop"},
+            {"value": "service", "label": "Service Business"},
+            {"value": "ecommerce", "label": "E-commerce"},
+            {"value": "manufacturing", "label": "Manufacturing"},
+            {"value": "other", "label": "Other"}
+          ],
+          "risk_weight": 0.1
+        },
+        {
+          "id": "employee_count",
+          "question": "How many employees do you have?",
+          "type": "select",
+          "options": [
+            {"value": "1-5", "label": "1-5 employees"},
+            {"value": "6-20", "label": "6-20 employees"},
+            {"value": "21-50", "label": "21-50 employees"},
+            {"value": "50+", "label": "50+ employees"}
+          ],
+          "risk_weight": 0.15
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,513 @@
+
+
+// ===== FILE: frontend/components/assessment/AssessmentForm.tsx =====
+
+'use client';
+
+import { useState } from 'react';
+import { AssessmentSection, AssessmentAnswers } from '@/types/assessment';
+import { QuestionStep } from './QuestionStep';
+import { BusinessInfoStep } from './BusinessInfoStep';
+
+interface AssessmentFormProps {
+  sections: AssessmentSection[];
+  onSubmit: (businessName: string, answers: AssessmentAnswers) => void;
+  loading: boolean;
+}
+
+export const AssessmentForm: React.FC<AssessmentFormProps> = ({ 
+  sections, 
+  onSubmit, 
+  loading 
+}) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [businessName, setBusinessName] = useState('');
+  const [answers, setAnswers] = useState<AssessmentAnswers>({});
+  const [showBusinessInfo, setShowBusinessInfo] = useState(true);
+
+  const allQuestions = sections.flatMap(section => section.questions);
+  const totalSteps = allQuestions.length + 1; // +1 for business info
+
+  const handleBusinessInfoSubmit = (name: string) => {
+    setBusinessName(name);
+    setShowBusinessInfo(false);
+    setCurrentStep(1);
+  };
+
+  const handleAnswer = (questionId: string, answer: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      onSubmit(businessName, answers);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 1) {
+      setShowBusinessInfo(true);
+      setCurrentStep(0);
+    } else if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const progress = ((currentStep) / (totalSteps - 1)) * 100;
+
+  if (showBusinessInfo) {
+    return (
+      <BusinessInfoStep
+        onSubmit={handleBusinessInfoSubmit}
+        onCancel={() => window.history.back()}
+      />
+    );
+  }
+
+  const currentQuestion = allQuestions[currentStep - 1];
+  const currentSection = sections.find(section => 
+    section.questions.includes(currentQuestion)
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Progress</span>
+          <span>{currentStep} of {totalSteps - 1}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-gradient-to-r from-[#dd020f] via-[#76127f] to-[#0c22f1] h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Question */}
+      <QuestionStep
+        section={currentSection!}
+        question={currentQuestion}
+        answer={answers[currentQuestion.id] || ''}
+        onAnswer={handleAnswer}
+        onNext={handleNext}
+        onBack={handleBack}
+        isLast={currentStep === totalSteps - 1}
+        loading={loading}
+        currentStep={currentStep - 1}
+        totalSteps={totalSteps - 1}
+      />
+    </div>
+  );
+};
+
+// ===== FILE: frontend/components/assessment/AssessmentResults.tsx =====
+
+'use client';
+
+import { AssessmentResult, SecurityRecommendation } from '@/types/assessment';
+import { Download, Shield, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+
+interface AssessmentResultsProps {
+  result: AssessmentResult;
+  onDownloadReport: (assessmentId: number) => void;
+  onRestart: () => void;
+  downloadLoading: boolean;
+}
+
+export const AssessmentResults: React.FC<AssessmentResultsProps> = ({
+  result,
+  onDownloadReport,
+  onRestart,
+  downloadLoading
+}) => {
+  const { risk_assessment, recommendations, threat_alerts, assessment_id } = result;
+
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'low': return 'risk-low';
+      case 'medium': return 'risk-medium';
+      case 'high': return 'risk-high';
+      case 'critical': return 'risk-critical';
+      default: return 'risk-medium';
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'critical':
+      case 'high':
+        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+      case 'medium':
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case 'low':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      default:
+        return <Shield className="h-5 w-5 text-blue-500" />;
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Risk Summary */}
+      <div className="card text-center">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-br from-[#dd020f] via-[#76127f] to-[#0c22f1]">
+          <Shield className="h-10 w-10 text-white" />
+        </div>
+        
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          Security Assessment Complete
+        </h2>
+        
+        <div className="inline-block">
+          <span className={`risk-badge ${getRiskColor(risk_assessment.risk_level)} text-lg px-6 py-2`}>
+            {risk_assessment.risk_level.toUpperCase()} RISK
+          </span>
+        </div>
+        
+        <p className="text-gray-600 mt-4">
+          Your business security score: <strong>{risk_assessment.risk_score.toFixed(1)}%</strong>
+        </p>
+        <p className="text-sm text-gray-500">
+          {risk_assessment.total_questions_answered} questions analyzed
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Recommendations */}
+        <div className="card">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+            <Shield className="h-6 w-6 text-[#d74622] mr-2" />
+            Security Recommendations
+          </h3>
+          
+          <div className="space-y-4">
+            {recommendations.map((rec, index) => (
+              <div key={index} className="p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                <div className="flex items-start gap-3">
+                  {getPriorityIcon(rec.priority)}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-gray-900">{rec.title}</h4>
+                      <span className={`risk-badge ${getRiskColor(rec.priority)} text-xs`}>
+                        {rec.priority}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm">{rec.description}</p>
+                    <div className="mt-2">
+                      <span className="text-xs text-gray-500 capitalize">
+                        {rec.category.replace('_', ' ')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Threat Alerts & Actions */}
+        <div className="space-y-6">
+          {/* Threat Alerts */}
+          {threat_alerts.length > 0 && (
+            <div className="card">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <AlertTriangle className="h-6 w-6 text-orange-500 mr-2" />
+                Current Threat Alerts
+              </h3>
+              
+              <div className="space-y-3">
+                {threat_alerts.map((alert, index) => (
+                  <div key={index} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <h4 className="font-semibold text-orange-800 text-sm">{alert.title}</h4>
+                    <p className="text-orange-700 text-xs mt-1">{alert.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="card">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Next Steps
+            </h3>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => onDownloadReport(assessment_id)}
+                disabled={downloadLoading}
+                className="w-full btn-primary flex items-center justify-center"
+              >
+                {downloadLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Generating Report...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-5 w-5 mr-2" />
+                    Download PDF Report
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={onRestart}
+                className="w-full btn-outline-dark"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Start New Assessment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ===== FILE: frontend/components/assessment/BusinessInfoStep.tsx =====
+
+'use client';
+
+import { useState } from 'react';
+import { Building2, ArrowRight } from 'lucide-react';
+
+interface BusinessInfoStepProps {
+  onSubmit: (businessName: string) => void;
+  onCancel: () => void;
+}
+
+export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({ 
+  onSubmit, 
+  onCancel 
+}) => {
+  const [businessName, setBusinessName] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (businessName.trim()) {
+      onSubmit(businessName.trim());
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="card text-center">
+        <div className="w-16 h-16 bg-[#d74622]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Building2 className="h-8 w-8 text-[#d74622]" />
+        </div>
+        
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          Tell us about your business
+        </h2>
+        
+        <p className="text-gray-600 mb-8">
+          Let's start with your business name. This helps us personalize your security assessment.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 text-left mb-2">
+              Business Name *
+            </label>
+            <input
+              type="text"
+              id="businessName"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="Enter your business name"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+            
+            <button
+              type="submit"
+              disabled={!businessName.trim()}
+              className="btn-primary flex-1 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Start Assessment
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ===== FILE: frontend/components/assessment/QuestionStep.tsx =====
+
+'use client';
+
+import { AssessmentSection, AssessmentQuestion } from '@/types/assessment';
+import { ArrowLeft, ArrowRight, Shield } from 'lucide-react';
+
+interface QuestionStepProps {
+  section: AssessmentSection;
+  question: AssessmentQuestion;
+  answer: string;
+  onAnswer: (questionId: string, answer: string) => void;
+  onNext: () => void;
+  onBack: () => void;
+  isLast: boolean;
+  loading: boolean;
+  currentStep: number;
+  totalSteps: number;
+}
+
+export const QuestionStep: React.FC<QuestionStepProps> = ({
+  section,
+  question,
+  answer,
+  onAnswer,
+  onNext,
+  onBack,
+  isLast,
+  loading,
+  currentStep,
+  totalSteps
+}) => {
+  const handleOptionSelect = (value: string) => {
+    onAnswer(question.id, value);
+  };
+
+  const handleNext = () => {
+    if (answer && !loading) {
+      onNext();
+    }
+  };
+
+  const canProceed = answer && !loading;
+
+  return (
+    <div className="card">
+      {/* Section Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 text-sm text-[#d74622] font-medium mb-2">
+          <Shield className="h-4 w-4" />
+          <span>{section.title}</span>
+        </div>
+        <div className="text-xs text-gray-500">
+          Question {currentStep + 1} of {totalSteps}
+        </div>
+      </div>
+
+      {/* Question */}
+      <h3 className="text-xl font-semibold text-gray-900 mb-8">
+        {question.question}
+      </h3>
+
+      {/* Options */}
+      <div className="space-y-3 mb-8">
+        {question.type === 'radio' && question.options?.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleOptionSelect(option.value)}
+            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+              answer === option.value
+                ? 'border-[#d74622] bg-[#d74622]/5 text-[#d74622]'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{option.label}</span>
+              {answer === option.value && (
+                <div className="w-6 h-6 bg-[#d74622] rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+              )}
+            </div>
+          </button>
+        ))}
+
+        {question.type === 'select' && question.options?.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleOptionSelect(option.value)}
+            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+              answer === option.value
+                ? 'border-[#d74622] bg-[#d74622]/5 text-[#d74622]'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <span className="font-medium">{option.label}</span>
+          </button>
+        ))}
+
+        {question.type === 'text' && (
+          <textarea
+            value={answer}
+            onChange={(e) => handleOptionSelect(e.target.value)}
+            placeholder="Type your answer here..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#d74622] focus:border-transparent resize-none"
+            rows={4}
+          />
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+        <button
+          onClick={onBack}
+          className="btn-secondary flex items-center"
+          disabled={loading}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </button>
+
+        <button
+          onClick={handleNext}
+          disabled={!canProceed}
+          className="btn-primary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Processing...
+            </>
+          ) : (
+            <>
+              {isLast ? 'Get Results' : 'Next Question'}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ===== FILE: frontend/components/security/RiskAssessmentForm.tsx =====
+
+
+
+// ===== FILE: frontend/components/security/SecurityChecklist.tsx =====
+
+
+
+// ===== FILE: frontend/components/security/ThreatAlerts.tsx =====
+
+
+
+// ===== FILE: frontend/components/ui/Button.tsx =====
+
+
+
+// ===== FILE: frontend/components/ui/Card.tsx =====
+

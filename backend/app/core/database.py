@@ -2,7 +2,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
-engine = create_async_engine(settings.DATABASE_URL, echo=True)
+# Use SQLite for development - no external database needed
+engine = create_async_engine(
+    "sqlite+aiosqlite:///./naijabiz_dev.db", 
+    connect_args={"check_same_thread": False},
+    echo=True  # Show SQL queries in console
+)
+
 AsyncSessionLocal = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
