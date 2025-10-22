@@ -78,21 +78,21 @@ const mockResult: AssessmentResult = {
   },
   recommendations: [
     {
-      id: 1,
+
       title: 'Implement Two-Factor Authentication',
       description: 'Add an extra layer of security to your business accounts and email.',
       priority: 'high',
       category: 'authentication'
     },
     {
-      id: 2,
+
       title: 'Regular Data Backups',
       description: 'Set up automated daily backups of your important business data.',
       priority: 'medium',
       category: 'data_protection'
     },
     {
-      id: 3,
+
       title: 'Employee Security Training',
       description: 'Educate your staff about common cyber threats targeting Nigerian businesses.',
       priority: 'medium',
