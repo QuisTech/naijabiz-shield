@@ -2,24 +2,24 @@ import { AssessmentData, AssessmentResult, AssessmentAnswers } from '@/types/ass
 
 // Smart API URL detection
 const getApiBaseUrl = () => {
-  // If environment variable is set, use it
+  // ✅ 1. Use environment variable if available
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
-  // In production without backend, use mock mode
-  if (process.env.NODE_ENV === 'production') {
-    return null; // This will trigger mock mode
+  // ✅ 2. Use local backend only in development
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:8000';
   }
 
-  // Default to local development
-  return 'http://localhost:8000';
+  // ✅ 3. Use Render backend for production fallback
+  return 'https://naijabiz-shield.onrender.com';
 };
 
 const API_BASE_URL = getApiBaseUrl();
-const isMockMode = API_BASE_URL === null;
+const isMockMode = API_BASE_URL === null; // Always false now unless explicitly set to null
 
-// Mock data for production demo
+// Mock data (used only if API_BASE_URL === null)
 const mockQuestions: AssessmentData = {
   sections: [
     {
@@ -110,7 +110,7 @@ const realApi = {
     const response = await fetch(`${API_BASE_URL}/api/v1/security/assess`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ business_name: businessName, answers: answers }),
+      body: JSON.stringify({ business_name: businessName, answers }),
     });
     if (!response.ok) throw new Error('Failed to submit assessment');
     const data = await response.json();
@@ -124,7 +124,7 @@ const realApi = {
   }
 };
 
-// Mock API functions
+// Mock API (used only if explicitly in mock mode)
 const mockApi = {
   async getQuestions(): Promise<AssessmentData> {
     await new Promise(resolve => setTimeout(resolve, 800));
@@ -138,12 +138,7 @@ const mockApi = {
       ...mockResult,
       assessment_id: Math.floor(Math.random() * 1000),
       risk_score: Math.floor(Math.random() * 40) + 30,
-      risk_level: 'medium',
-      risk_assessment: {
-        risk_score: Math.floor(Math.random() * 40) + 30,
-        risk_level: 'medium',
-        total_questions_answered: Object.keys(answers).length
-      }
+      risk_level: 'medium'
     };
   },
 
@@ -166,6 +161,5 @@ Thank you for using NaijaBiz Shield!
   }
 };
 
-// Export the appropriate API based on environment
 export const assessmentApi = isMockMode ? mockApi : realApi;
 export const isUsingMockData = isMockMode;
