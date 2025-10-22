@@ -28,10 +28,11 @@ app = FastAPI(
 
 # Allowed origins
 allowed_origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://naijabiz-shield-insp-b1szji4b9-quistechs-projects.vercel.app",
-    "https://naijabiz-shield-insp-git-main-quistechs-projects.vercel.app"
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://naijabiz-shield-insp-git-main-quistechs-projects.vercel.app",
+        "https://naijabiz-shield-insp.vercel.app",
+        "https://naijabiz-shield-insp-ik639jhik-quistechs-projects.vercel.app"
 ]
 
 # CORS middleware
