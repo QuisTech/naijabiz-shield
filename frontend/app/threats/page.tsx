@@ -37,7 +37,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 font-bold">
-              Protect Your Nigerian Business from 
+              Protect Your Nigerian Business from{" "} 
               <span className="text-primary-500 font-bold">Digital Threats</span>
             </h1>
             <p className="text-xl text-gray-100 mb-8 font-medium max-w-3xl mx-auto">
@@ -136,7 +136,7 @@ export default function Home() {
               <span className="ml-2 text-lg font-semibold">NaijaBiz Shield</span>
             </div>
             <div className="text-gray-100">
-              &copy; 2024 NaijaBiz Shield. Built for Nigerian SMEs.
+              &copy; 2024 InspireNova Enterprises. Built for Nigerian SMEs.
             </div>
           </div>
         </div>

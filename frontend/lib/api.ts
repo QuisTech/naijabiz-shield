@@ -1,8 +1,103 @@
 import { AssessmentData, AssessmentResult, AssessmentAnswers } from '@/types/assessment';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Smart API URL detection
+const getApiBaseUrl = () => {
+  // If environment variable is set, use it
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // In production without backend, use mock mode
+  if (process.env.NODE_ENV === 'production') {
+    return null; // This will trigger mock mode
+  }
+  
+  // Default to local development
+  return 'http://localhost:8000';
+};
 
-export const assessmentApi = {
+const API_BASE_URL = getApiBaseUrl();
+const isMockMode = API_BASE_URL === null;
+
+// Mock data for production demo
+const mockQuestions: AssessmentData = {
+  sections: [
+    {
+      id: 'business-info',
+      title: 'Business Information',
+      questions: [
+        {
+          id: 'business_type',
+          question: 'What type of business do you operate?',
+          type: 'radio',
+          options: [
+            { value: 'retail', label: 'Retail Store' },
+            { value: 'service', label: 'Service Business' },
+            { value: 'tech', label: 'Technology Company' },
+            { value: 'other', label: 'Other' }
+          ]
+        },
+        {
+          id: 'employee_count',
+          question: 'How many employees does your business have?',
+          type: 'radio',
+          options: [
+            { value: '1-5', label: '1-5 employees' },
+            { value: '6-20', label: '6-20 employees' },
+            { value: '21-50', label: '21-50 employees' },
+            { value: '50+', label: '50+ employees' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'security-practices',
+      title: 'Security Practices',
+      questions: [
+        {
+          id: 'data_backup',
+          question: 'Do you regularly backup your business data?',
+          type: 'radio',
+          options: [
+            { value: 'daily', label: 'Yes, daily' },
+            { value: 'weekly', label: 'Yes, weekly' },
+            { value: 'monthly', label: 'Yes, monthly' },
+            { value: 'never', label: 'No, never' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const mockResult: AssessmentResult = {
+  assessment_id: Math.floor(Math.random() * 1000),
+  risk_score: 65,
+  risk_level: 'medium',
+  recommendations: [
+    {
+      id: 1,
+      title: 'Implement Two-Factor Authentication',
+      description: 'Add an extra layer of security to your business accounts and email.',
+      priority: 'high'
+    },
+    {
+      id: 2,
+      title: 'Regular Data Backups',
+      description: 'Set up automated daily backups of your important business data.',
+      priority: 'medium'
+    },
+    {
+      id: 3,
+      title: 'Employee Security Training',
+      description: 'Educate your staff about common cyber threats targeting Nigerian businesses.',
+      priority: 'medium'
+    }
+  ]
+};
+
+// Real API functions
+const realApi = {
   async getQuestions(): Promise<AssessmentData> {
     const response = await fetch(`${API_BASE_URL}/api/v1/security/questions`);
     if (!response.ok) throw new Error('Failed to fetch questions');
@@ -13,13 +108,8 @@ export const assessmentApi = {
   async submitAssessment(businessName: string, answers: AssessmentAnswers): Promise<AssessmentResult> {
     const response = await fetch(`${API_BASE_URL}/api/v1/security/assess`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        business_name: businessName,
-        answers: answers
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_name: businessName, answers: answers }),
     });
     if (!response.ok) throw new Error('Failed to submit assessment');
     const data = await response.json();
@@ -27,29 +117,48 @@ export const assessmentApi = {
   },
 
   async downloadReport(assessmentId: number): Promise<Blob> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/security/report/${assessmentId}`);
-      if (!response.ok) {
-        // If PDF generation fails, create a mock PDF instead of throwing error
-        console.log('PDF generation not ready, using mock PDF');
-        const mockContent = `NaijaBiz Shield Security Report
-Assessment ID: ${assessmentId}
-Date: ${new Date().toLocaleDateString()}
-
-Your security assessment has been completed successfully.
-Full PDF reports with detailed analysis will be available in the production version.
-
-Thank you for using NaijaBiz Shield!`;
-        
-        return new Blob([mockContent], { type: 'application/pdf' });
-      }
-      return await response.blob();
-    } catch (error) {
-      console.log('PDF download failed, using fallback:', error);
-      // Return a mock blob to prevent app crash
-      const mockContent = `Security Assessment Report - Assessment ID: ${assessmentId}
-PDF generation will be available in the production version.`;
-      return new Blob([mockContent], { type: 'text/plain' });
-    }
+    const response = await fetch(`${API_BASE_URL}/api/v1/security/report/${assessmentId}`);
+    if (!response.ok) throw new Error('Failed to download report');
+    return await response.blob();
   }
 };
+
+// Mock API functions
+const mockApi = {
+  async getQuestions(): Promise<AssessmentData> {
+    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate loading
+    return mockQuestions;
+  },
+
+  async submitAssessment(businessName: string, answers: AssessmentAnswers): Promise<AssessmentResult> {
+    await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate processing
+    console.log('Business:', businessName, 'Answers:', answers); // For demo purposes
+    return { 
+      ...mockResult, 
+      assessment_id: Math.floor(Math.random() * 1000),
+      risk_score: Math.floor(Math.random() * 40) + 30 // Random score between 30-70
+    };
+  },
+
+  async downloadReport(assessmentId: number): Promise<Blob> {
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const reportContent = `
+NAIJABIZ SHIELD - SECURITY ASSESSMENT REPORT
+Assessment ID: ${assessmentId}
+Generated: ${new Date().toLocaleDateString()}
+
+SECURITY ASSESSMENT COMPLETE!
+
+Your Nigerian business has been assessed for digital security risks.
+This demo shows the assessment workflow. In a full implementation,
+you would receive personalized security recommendations.
+
+Thank you for using NaijaBiz Shield!
+    `.trim();
+    return new Blob([reportContent], { type: 'text/plain' });
+  }
+};
+
+// Export the appropriate API based on environment
+export const assessmentApi = isMockMode ? mockApi : realApi;
+export const isUsingMockData = isMockMode;

@@ -136,7 +136,7 @@ export default function Home() {
               <span className="ml-2 text-lg font-semibold text-white">NaijaBiz Shield</span>
             </div>
             <div className="text-gray-400">
-              &copy; 2024 NaijaBiz Shield. Built for Nigerian SMEs.
+              &copy; 2024 InspireNova Enterprises. Built for Nigerian SMEs.
             </div>
           </div>
         </div>
