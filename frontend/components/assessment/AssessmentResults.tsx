@@ -45,28 +45,33 @@ export const AssessmentResults: React.FC<AssessmentResultsProps> = ({
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Risk Summary */}
-      <div className="card text-center">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-br from-[#dd020f] via-[#76127f] to-[#0c22f1]">
-          <Shield className="h-10 w-10 text-white" />
-        </div>
-        
-        <h2 className="text-3xl font-bold text-white mb-4">
-          Security Assessment Complete
-        </h2>
-        
-        <div className="inline-block">
-          <span className={`risk-badge ${getRiskColor(risk_assessment.risk_level)} text-lg px-6 py-2`}>
-            {risk_assessment.risk_level.toUpperCase()} RISK
-          </span>
-        </div>
-        
-        <p className="text-gray-300 mt-4">
-          Your business security score: <strong>{risk_assessment.risk_score.toFixed(1)}%</strong>
-        </p>
-        <p className="text-sm text-gray-500">
-          {risk_assessment.total_questions_answered} questions analyzed
-        </p>
+<div className="card text-center">
+  <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-br from-[#dd020f] via-[#76127f] to-[#0c22f1]">
+    <Shield className="h-10 w-10 text-white" />
+  </div>
+  
+  <h2 className="text-3xl font-bold text-white mb-4">
+    Security Assessment Complete
+  </h2>
+
+  {risk_assessment && (
+    <>
+      <div className="inline-block">
+        <span className={`risk-badge ${getRiskColor(risk_assessment.risk_level)} text-lg px-6 py-2`}>
+          {risk_assessment.risk_level.toUpperCase()} RISK
+        </span>
       </div>
+
+      <p className="text-gray-300 mt-4">
+        Your business security score: <strong>{risk_assessment.risk_score.toFixed(1)}%</strong>
+      </p>
+      <p className="text-sm text-gray-500">
+        {risk_assessment.total_questions_answered} questions analyzed
+      </p>
+    </>
+  )}
+</div>
+
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Recommendations */}
