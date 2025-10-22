@@ -6,12 +6,12 @@ const getApiBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  
+
   // In production without backend, use mock mode
   if (process.env.NODE_ENV === 'production') {
     return null; // This will trigger mock mode
   }
-  
+
   // Default to local development
   return 'http://localhost:8000';
 };
@@ -71,28 +71,23 @@ const mockResult: AssessmentResult = {
   assessment_id: Math.floor(Math.random() * 1000),
   risk_score: 65,
   risk_level: 'medium',
-  risk_assessment: {
-    risk_score: 65,
-    risk_level: 'medium',
-    total_questions_answered: 3
-  },
   recommendations: [
     {
-
+      id: 1,
       title: 'Implement Two-Factor Authentication',
       description: 'Add an extra layer of security to your business accounts and email.',
       priority: 'high',
       category: 'authentication'
     },
     {
-
+      id: 2,
       title: 'Regular Data Backups',
       description: 'Set up automated daily backups of your important business data.',
       priority: 'medium',
       category: 'data_protection'
     },
     {
-
+      id: 3,
       title: 'Employee Security Training',
       description: 'Educate your staff about common cyber threats targeting Nigerian businesses.',
       priority: 'medium',
@@ -132,17 +127,18 @@ const realApi = {
 // Mock API functions
 const mockApi = {
   async getQuestions(): Promise<AssessmentData> {
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate loading
+    await new Promise(resolve => setTimeout(resolve, 800));
     return mockQuestions;
   },
 
   async submitAssessment(businessName: string, answers: AssessmentAnswers): Promise<AssessmentResult> {
-    await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate processing
-    console.log('Business:', businessName, 'Answers:', answers); // For demo purposes
-    return { 
-      ...mockResult, 
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    console.log('Business:', businessName, 'Answers:', answers);
+    return {
+      ...mockResult,
       assessment_id: Math.floor(Math.random() * 1000),
-      risk_score: Math.floor(Math.random() * 40) + 30, // Random score between 30-70
+      risk_score: Math.floor(Math.random() * 40) + 30,
+      risk_level: 'medium',
       risk_assessment: {
         risk_score: Math.floor(Math.random() * 40) + 30,
         risk_level: 'medium',
