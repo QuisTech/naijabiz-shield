@@ -30,6 +30,7 @@ const mockQuestions: AssessmentData = {
           id: 'business_type',
           question: 'What type of business do you operate?',
           type: 'radio',
+          risk_weight: 1.0,
           options: [
             { value: 'retail', label: 'Retail Store' },
             { value: 'service', label: 'Service Business' },
@@ -41,23 +42,19 @@ const mockQuestions: AssessmentData = {
           id: 'employee_count',
           question: 'How many employees does your business have?',
           type: 'radio',
+          risk_weight: 1.2,
           options: [
             { value: '1-5', label: '1-5 employees' },
             { value: '6-20', label: '6-20 employees' },
             { value: '21-50', label: '21-50 employees' },
             { value: '50+', label: '50+ employees' }
           ]
-        }
-      ]
-    },
-    {
-      id: 'security-practices',
-      title: 'Security Practices',
-      questions: [
+        },
         {
           id: 'data_backup',
           question: 'Do you regularly backup your business data?',
           type: 'radio',
+          risk_weight: 1.8,
           options: [
             { value: 'daily', label: 'Yes, daily' },
             { value: 'weekly', label: 'Yes, weekly' },
@@ -74,26 +71,35 @@ const mockResult: AssessmentResult = {
   assessment_id: Math.floor(Math.random() * 1000),
   risk_score: 65,
   risk_level: 'medium',
+  risk_assessment: {
+    risk_score: 65,
+    risk_level: 'medium',
+    total_questions_answered: 3
+  },
   recommendations: [
     {
       id: 1,
       title: 'Implement Two-Factor Authentication',
       description: 'Add an extra layer of security to your business accounts and email.',
-      priority: 'high'
+      priority: 'high',
+      category: 'authentication'
     },
     {
       id: 2,
       title: 'Regular Data Backups',
       description: 'Set up automated daily backups of your important business data.',
-      priority: 'medium'
+      priority: 'medium',
+      category: 'data_protection'
     },
     {
       id: 3,
       title: 'Employee Security Training',
       description: 'Educate your staff about common cyber threats targeting Nigerian businesses.',
-      priority: 'medium'
+      priority: 'medium',
+      category: 'education'
     }
-  ]
+  ],
+  threat_alerts: []
 };
 
 // Real API functions
@@ -136,7 +142,12 @@ const mockApi = {
     return { 
       ...mockResult, 
       assessment_id: Math.floor(Math.random() * 1000),
-      risk_score: Math.floor(Math.random() * 40) + 30 // Random score between 30-70
+      risk_score: Math.floor(Math.random() * 40) + 30, // Random score between 30-70
+      risk_assessment: {
+        risk_score: Math.floor(Math.random() * 40) + 30,
+        risk_level: 'medium',
+        total_questions_answered: Object.keys(answers).length
+      }
     };
   },
 
