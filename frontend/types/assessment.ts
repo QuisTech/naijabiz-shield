@@ -23,6 +23,7 @@ export interface RiskAssessment {
 }
 
 export interface SecurityRecommendation {
+  id?: number;
   priority: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   description: string;
@@ -31,9 +32,11 @@ export interface SecurityRecommendation {
 
 export interface AssessmentResult {
   assessment_id: number;
-  risk_assessment: RiskAssessment;
+  risk_score: number; // At root level
+  risk_level: 'low' | 'medium' | 'high' | 'critical'; // At root level
   recommendations: SecurityRecommendation[];
   threat_alerts: any[];
+  risk_assessment?: RiskAssessment; // ✅ Added optional
 }
 
 export interface AssessmentData {
