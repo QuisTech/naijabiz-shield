@@ -14,7 +14,23 @@ async def lifespan(app: FastAPI):
     print("Creating database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("Database tables created!")
+    
+    # NEW: Check if we need to add the email column
+    try:
+        from sqlalchemy import text
+        async with engine.connect() as conn:
+            # Check if business_email column exists
+            result = await conn.execute(text("PRAGMA table_info(security_assessments)"))
+            columns = [row[1] for row in result.fetchall()]
+            
+            if 'business_email' not in columns:
+                print("Adding business_email column to security_assessments table...")
+                await conn.execute(text("ALTER TABLE security_assessments ADD COLUMN business_email VARCHAR(255)"))
+                await conn.commit()
+                print("Column added successfully!")
+    except Exception as e:
+        print(f"Note: Could not check/alter table structure: {e}")
+    
     yield
     # Shutdown
     await engine.dispose()

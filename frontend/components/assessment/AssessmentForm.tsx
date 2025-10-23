@@ -7,7 +7,7 @@ import { BusinessInfoStep } from './BusinessInfoStep';
 
 interface AssessmentFormProps {
   sections: AssessmentSection[];
-  onSubmit: (businessName: string, answers: AssessmentAnswers) => void;
+  onSubmit: (businessName: string, businessEmail: string, answers: AssessmentAnswers) => void; // UPDATED
   loading: boolean;
 }
 
@@ -18,14 +18,17 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [businessName, setBusinessName] = useState('');
+  const [businessEmail, setBusinessEmail] = useState(''); // NEW: Email state
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [showBusinessInfo, setShowBusinessInfo] = useState(true);
 
   const allQuestions = sections.flatMap(section => section.questions);
-  const totalSteps = allQuestions.length + 1; // +1 for business info
+  const totalSteps = allQuestions.length + 1;
 
-  const handleBusinessInfoSubmit = (name: string) => {
+  // UPDATED: Accept both name and email
+  const handleBusinessInfoSubmit = (name: string, email: string) => {
     setBusinessName(name);
+    setBusinessEmail(email);
     setShowBusinessInfo(false);
     setCurrentStep(1);
   };
@@ -38,7 +41,8 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      onSubmit(businessName, answers);
+      // UPDATED: Pass email to onSubmit
+      onSubmit(businessName, businessEmail, answers);
     }
   };
 

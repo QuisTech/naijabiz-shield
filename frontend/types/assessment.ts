@@ -42,3 +42,16 @@ export interface AssessmentResult {
 export interface AssessmentData {
   sections: AssessmentSection[];
 }
+
+export interface SecurityAssessment {
+  id: number;
+  business_name: string;
+  business_email?: string; // NEW: Optional email field
+  business_type: string;
+  employee_count: string;
+  risk_score: number;
+  risk_level: string;
+  assessment_data: Record<string, any>;
+  recommendations: SecurityRecommendation[];
+  created_at: string;
+}
