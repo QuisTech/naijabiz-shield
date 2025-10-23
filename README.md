@@ -1,4 +1,6 @@
 NaijaBiz Shield - Nigerian SME Digital Resilience Platform
+
+
 <img width="1366" height="768" alt="Screenshot (32)" src="https://github.com/user-attachments/assets/44fb4751-7122-4866-b346-cf5c7a46d348" />
 <img width="1366" height="768" alt="Screenshot (36)" src="https://github.com/user-attachments/assets/d7de49c5-5d39-4047-bf7f-a7429d6c6b7c" />
 <img width="1366" height="768" alt="Screenshot (35)" src="https://github.com/user-attachments/assets/349b5f47-fbd9-4ccc-909b-ec12dae2e6a6" />
