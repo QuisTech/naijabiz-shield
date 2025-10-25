@@ -1,4 +1,4 @@
-PROJECT CODE ANALYSIS - Sat Oct 25 19:10:24 WCAST 2025
+PROJECT CODE ANALYSIS - Sun Oct 26 00:06:25 WCAST 2025
 ================================
 
 // ==== backend/app/api/__init__.py ====
@@ -806,6 +806,8 @@ allowed_origins = [
         "https://naijabiz-shield-insp-git-main-quistechs-projects.vercel.app",
         "https://naijabiz-shield-insp.vercel.app",
         "https://naijabiz-shield-insp-ik639jhik-quistechs-projects.vercel.app"
+        "https://naijabiz-shield-insp-*.vercel.app",
+        "https://*.vercel.app"
 ]
 
 # CORS middleware

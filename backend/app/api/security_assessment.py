@@ -161,7 +161,7 @@ async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
                     "business_name": a.business_name,
                     "risk_level": a.risk_level,
                     "risk_score": a.risk_score,
-                    "created_at": a.created_at.isoformat() if a.created_at else None
+                    "created_at": a.created_at.isoformat() if hasattr(a.created_at, 'isoformat') else str(a.created_at)
                 }
                 for a in assessments
             ],
@@ -170,3 +170,77 @@ async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading assessments: {str(e)}")
+
+@router.get("/debug/customers")
+async def debug_customers(db: AsyncSession = Depends(get_db)):
+    """Debug endpoint to see what's in the database"""
+    try:
+        from sqlalchemy import text
+        
+        # Check if table exists and get basic info
+        result = await db.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='security_assessments'")
+        )
+        table_exists = result.scalar_one_or_none()
+        
+        if not table_exists:
+            return {"error": "security_assessments table does not exist"}
+        
+        # Get row count
+        count_result = await db.execute(
+            text("SELECT COUNT(*) FROM security_assessments")
+        )
+        row_count = count_result.scalar_one()
+        
+        # Get sample data without datetime issues
+        data_result = await db.execute(
+            text("SELECT id, business_name, business_email FROM security_assessments LIMIT 5")
+        )
+        sample_data = data_result.fetchall()
+        
+        return {
+            "table_exists": True,
+            "total_assessments": row_count,
+            "sample_data": [
+                {"id": row[0], "business_name": row[1], "business_email": row[2]} 
+                for row in sample_data
+            ]
+        }
+        
+    except Exception as e:
+        return {"error": f"Database error: {str(e)}"}
+
+@router.get("/customers/simple")
+async def get_customers_simple(db: AsyncSession = Depends(get_db)):
+    """Simple customer data without complex processing"""
+    try:
+        from sqlalchemy import text
+        result = await db.execute(
+            text("""
+                SELECT id, business_name, business_email, business_type, 
+                       risk_level, risk_score
+                FROM security_assessments 
+                ORDER BY id DESC 
+                LIMIT 20
+            """)
+        )
+        assessments = result.fetchall()
+        
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": row[0],
+                    "business_name": row[1],
+                    "business_email": row[2],
+                    "business_type": row[3],
+                    "risk_level": row[4],
+                    "risk_score": float(row[5]) if row[5] else 0.0
+                }
+                for row in assessments
+            ],
+            "total": len(assessments)
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
