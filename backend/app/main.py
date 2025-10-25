@@ -49,6 +49,8 @@ allowed_origins = [
         "https://naijabiz-shield-insp-git-main-quistechs-projects.vercel.app",
         "https://naijabiz-shield-insp.vercel.app",
         "https://naijabiz-shield-insp-ik639jhik-quistechs-projects.vercel.app"
+        "https://naijabiz-shield-insp-*.vercel.app",
+        "https://*.vercel.app"
 ]
 
 # CORS middleware

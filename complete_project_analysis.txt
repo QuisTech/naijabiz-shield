@@ -1,4 +1,4 @@
-PROJECT CODE ANALYSIS - Thu Oct 23 19:33:58 WCAST 2025
+PROJECT CODE ANALYSIS - Sat Oct 25 19:10:24 WCAST 2025
 ================================
 
 // ==== backend/app/api/__init__.py ====
@@ -89,9 +89,10 @@ async def submit_assessment(assessment_data: Dict[str, Any], db: AsyncSession = 
             risk_result['risk_level']
         )
         
-        # Save to database (optional)
+        # Save to database (with email)
         db_assessment = SecurityAssessment(
             business_name=assessment_data.get('business_name'),
+            business_email=assessment_data.get('business_email'),  # NEW: Save email
             business_type=assessment_data.get('answers', {}).get('business_type'),
             employee_count=assessment_data.get('answers', {}).get('employee_count'),
             risk_score=risk_result['risk_score'],
@@ -279,6 +280,7 @@ class SecurityAssessment(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     business_name = Column(String(255), nullable=True)
+    business_email = Column(String(255), nullable=True)
     business_type = Column(String(100), nullable=True)
     employee_count = Column(String(50), nullable=True)
     risk_score = Column(Float, default=0.0)
@@ -769,7 +771,23 @@ async def lifespan(app: FastAPI):
     print("Creating database tables...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("Database tables created!")
+    
+    # NEW: Check if we need to add the email column
+    try:
+        from sqlalchemy import text
+        async with engine.connect() as conn:
+            # Check if business_email column exists
+            result = await conn.execute(text("PRAGMA table_info(security_assessments)"))
+            columns = [row[1] for row in result.fetchall()]
+            
+            if 'business_email' not in columns:
+                print("Adding business_email column to security_assessments table...")
+                await conn.execute(text("ALTER TABLE security_assessments ADD COLUMN business_email VARCHAR(255)"))
+                await conn.commit()
+                print("Column added successfully!")
+    except Exception as e:
+        print(f"Note: Could not check/alter table structure: {e}")
+    
     yield
     # Shutdown
     await engine.dispose()
@@ -1086,7 +1104,7 @@ import { BusinessInfoStep } from './BusinessInfoStep';
 
 interface AssessmentFormProps {
   sections: AssessmentSection[];
-  onSubmit: (businessName: string, answers: AssessmentAnswers) => void;
+  onSubmit: (businessName: string, businessEmail: string, answers: AssessmentAnswers) => void; // UPDATED
   loading: boolean;
 }
 
@@ -1097,14 +1115,17 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [businessName, setBusinessName] = useState('');
+  const [businessEmail, setBusinessEmail] = useState(''); // NEW: Email state
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [showBusinessInfo, setShowBusinessInfo] = useState(true);
 
   const allQuestions = sections.flatMap(section => section.questions);
-  const totalSteps = allQuestions.length + 1; // +1 for business info
+  const totalSteps = allQuestions.length + 1;
 
-  const handleBusinessInfoSubmit = (name: string) => {
+  // UPDATED: Accept both name and email
+  const handleBusinessInfoSubmit = (name: string, email: string) => {
     setBusinessName(name);
+    setBusinessEmail(email);
     setShowBusinessInfo(false);
     setCurrentStep(1);
   };
@@ -1117,7 +1138,8 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      onSubmit(businessName, answers);
+      // UPDATED: Pass email to onSubmit
+      onSubmit(businessName, businessEmail, answers);
     }
   };
 
@@ -1349,3 +1371,487 @@ export const AssessmentResults: React.FC<AssessmentResultsProps> = ({
     </div>
   );
 };
+
+
+// ==== frontend/components/assessment/BusinessInfoStep.tsx ====
+'use client';
+
+import { useState } from 'react';
+import { Building2, ArrowRight } from 'lucide-react';
+
+interface BusinessInfoStepProps {
+  onSubmit: (businessName: string, businessEmail: string) => void;
+  onCancel: () => void;
+}
+
+export const BusinessInfoStep: React.FC<BusinessInfoStepProps> = ({
+  onSubmit,
+  onCancel
+}) => {
+  const [businessName, setBusinessName] = useState('');
+  const [businessEmail, setBusinessEmail] = useState('');
+  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { name?: string; email?: string } = {};
+
+    if (!businessName.trim()) {
+      newErrors.name = 'Business name is required';
+    }
+
+    if (!businessEmail.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!isValidEmail(businessEmail)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(businessName.trim(), businessEmail.trim());
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="card">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#dd020f] via-[#76127f] to-[#0c22f1] flex items-center justify-center">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Tell us about your business
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Let's start with your business details. This helps us personalize your security assessment.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Business Name Field */}
+          <div>
+            <label htmlFor="businessName" className="block text-sm font-medium text-white mb-2">
+              Business Name *
+            </label>
+            <input
+              type="text"
+              id="businessName"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="Enter your business name"
+              className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent ${
+                errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-[#d74622]'
+              }`}
+            />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+            )}
+          </div>
+
+          {/* Business Email Field */}
+          <div>
+            <label htmlFor="businessEmail" className="block text-sm font-medium text-white mb-2">
+              Business Email *
+            </label>
+            <input
+              type="email"
+              id="businessEmail"
+              value={businessEmail}
+              onChange={(e) => setBusinessEmail(e.target.value)}
+              placeholder="Enter your business email"
+              className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent ${
+                errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-[#d74622]'
+              }`}
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+            )}
+            <p className="mt-1 text-sm text-gray-400">
+              We'll send your security assessment report to this email
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 btn btn-primary"
+            >
+              Start Assessment
+            </button>
+          </div>
+
+          {/* Privacy Notice */}
+          <div className="text-center pt-4 border-t border-gray-600">
+            <p className="text-xs text-gray-400">
+              We respect your privacy. Your email and business information will be kept confidential 
+              and used only to deliver your security assessment report.
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
+// ==== frontend/components/assessment/EmailCollectionStep.tsx ====
+'use client';
+
+import { useState } from 'react';
+import { Mail, ArrowRight, ArrowLeft, Shield } from 'lucide-react';
+
+interface EmailCollectionStepProps {
+  onSubmit: (email: string) => void;
+  onBack: () => void;
+  loading?: boolean;
+}
+
+export const EmailCollectionStep: React.FC<EmailCollectionStepProps> = ({ 
+  onSubmit, 
+  onBack,
+  loading = false
+}) => {
+  const [email, setEmail] = useState('');
+  const [validationError, setValidationError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+
+  const validateEmail = async (email: string) => {
+    if (!email.trim()) {
+      setValidationError('Email is required');
+      return false;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setValidationError('Please enter a valid email address');
+      return false;
+    }
+
+    // API validation for additional checks
+    try {
+      setIsValidating(true);
+      const response = await fetch('/api/v1/security/validate-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        setValidationError(result.message);
+        return false;
+      }
+
+      setValidationError('');
+      return true;
+    } catch (error) {
+      console.error('Email validation error:', error);
+      // If validation API fails, proceed with basic validation
+      setValidationError('');
+      return true;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const isValid = await validateEmail(email);
+    if (isValid) {
+      onSubmit(email);
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    // Clear validation error when user starts typing
+    if (validationError) {
+      setValidationError('');
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="card">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-[#d74622]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="h-8 w-8 text-[#d74622]" />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Almost Done! Get Your Security Report
+          </h2>
+          
+          <p className="text-gray-300 mb-2">
+            Enter your email to receive your detailed security assessment report
+          </p>
+          <p className="text-sm text-gray-400">
+            We'll send your personalized recommendations and threat analysis
+          </p>
+        </div>
+
+        {/* Benefits */}
+        <div className="bg-[#1a2d44] border border-[#2d3748] rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-white mb-3 flex items-center">
+            <Shield className="h-4 w-4 text-[#d74622] mr-2" />
+            What you'll receive:
+          </h3>
+          <ul className="text-sm text-gray-300 space-y-2">
+            <li className="flex items-center">
+              <div className="w-1.5 h-1.5 bg-[#d74622] rounded-full mr-2"></div>
+              Complete PDF security report
+            </li>
+            <li className="flex items-center">
+              <div className="w-1.5 h-1.5 bg-[#d74622] rounded-full mr-2"></div>
+              Personalized recommendations
+            </li>
+            <li className="flex items-center">
+              <div className="w-1.5 h-1.5 bg-[#d74622] rounded-full mr-2"></div>
+              Current threat alerts for Nigerian businesses
+            </li>
+            <li className="flex items-center">
+              <div className="w-1.5 h-1.5 bg-[#d74622] rounded-full mr-2"></div>
+              Priority action steps
+            </li>
+          </ul>
+        </div>
+
+        {/* Email Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 text-left mb-2">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="Enter your business email"
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#d74622] focus:border-transparent ${
+                validationError 
+                  ? 'border-red-500 bg-red-500/5' 
+                  : 'border-gray-600'
+              }`}
+              required
+              disabled={loading || isValidating}
+            />
+            {validationError && (
+              <p className="text-red-400 text-sm mt-2 flex items-center">
+                <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-2"></span>
+                {validationError}
+              </p>
+            )}
+          </div>
+
+          {/* Privacy Notice */}
+          <div className="text-xs text-gray-400 text-center">
+            <p>
+              We respect your privacy. Your email will only be used to send your security report 
+              and important updates. No spam, unsubscribe anytime.
+            </p>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={loading || isValidating}
+              className="btn-secondary flex-1 flex items-center justify-center"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Questions
+            </button>
+            
+            <button
+              type="submit"
+              disabled={!email.trim() || loading || isValidating}
+              className="btn-primary flex-1 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading || isValidating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {isValidating ? 'Validating...' : 'Processing...'}
+                </>
+              ) : (
+                <>
+                  Get My Report
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
+// ==== frontend/components/assessment/QuestionStep.tsx ====
+'use client';
+
+import { AssessmentSection, AssessmentQuestion } from '@/types/assessment';
+import { ArrowLeft, ArrowRight, Shield } from 'lucide-react';
+
+interface QuestionStepProps {
+  section: AssessmentSection;
+  question: AssessmentQuestion;
+  answer: string;
+  onAnswer: (questionId: string, answer: string) => void;
+  onNext: () => void;
+  onBack: () => void;
+  isLast: boolean;
+  loading: boolean;
+  currentStep: number;
+  totalSteps: number;
+}
+
+export const QuestionStep: React.FC<QuestionStepProps> = ({
+  section,
+  question,
+  answer,
+  onAnswer,
+  onNext,
+  onBack,
+  isLast,
+  loading,
+  currentStep,
+  totalSteps
+}) => {
+  const handleOptionSelect = (value: string) => {
+    onAnswer(question.id, value);
+  };
+
+  const handleNext = () => {
+    if (answer && !loading) {
+      onNext();
+    }
+  };
+
+  const canProceed = answer && !loading;
+
+  return (
+    <div className="card">
+      {/* Section Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 text-sm text-[#d74622] font-medium mb-2">
+          <Shield className="h-4 w-4" />
+          <span>{section.title}</span>
+        </div>
+        <div className="text-xs text-gray-400">
+          Question {currentStep + 1} of {totalSteps}
+        </div>
+      </div>
+
+      {/* Question */}
+      <h3 className="text-xl font-semibold text-white mb-8">
+        {question.question}
+      </h3>
+
+      {/* Options */}
+      <div className="space-y-3 mb-8">
+        {question.type === 'radio' && question.options?.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleOptionSelect(option.value)}
+            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+              answer === option.value
+                ? 'border-[#d74622] bg-[#d74622]/5 text-[#d74622]'
+                : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{option.label}</span>
+              {answer === option.value && (
+                <div className="w-6 h-6 bg-[#d74622] rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2  rounded-full"></div>
+                </div>
+              )}
+            </div>
+          </button>
+        ))}
+
+        {question.type === 'select' && question.options?.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleOptionSelect(option.value)}
+            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 ${
+              answer === option.value
+                ? 'border-[#d74622] bg-[#d74622]/5 text-[#d74622]'
+                : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700'
+            }`}
+          >
+            <span className="font-medium">{option.label}</span>
+          </button>
+        ))}
+
+        {question.type === 'text' && (
+          <textarea
+            value={answer}
+            onChange={(e) => handleOptionSelect(e.target.value)}
+            placeholder="Type your answer here..."
+            className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-[#d74622] focus:border-transparent resize-none"
+            rows={4}
+          />
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between items-center pt-6 border-t border-gray-600">
+        <button
+          onClick={onBack}
+          className="btn-secondary flex items-center"
+          disabled={loading}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </button>
+
+        <button
+          onClick={handleNext}
+          disabled={!canProceed}
+          className="btn-primary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Processing...
+            </>
+          ) : (
+            <>
+              {isLast ? 'Get Results' : 'Next Question'}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
