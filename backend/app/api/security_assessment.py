@@ -145,11 +145,11 @@ async def generate_pdf_report(assessment_id: int, db: AsyncSession = Depends(get
 
 @router.get("/assessments")
 async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
-    """Get recent security assessments"""
+    """Get recent security assessments - SIMPLIFIED"""
     try:
         from sqlalchemy import text
         result = await db.execute(
-            text("SELECT id, business_name, risk_level, risk_score, created_at FROM security_assessments ORDER BY created_at DESC LIMIT 10")
+            text("SELECT id, business_name, risk_level, risk_score FROM security_assessments ORDER BY id DESC LIMIT 10")
         )
         assessments = result.fetchall()
         
@@ -157,19 +157,18 @@ async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
             "success": True,
             "data": [
                 {
-                    "id": a.id,
-                    "business_name": a.business_name,
-                    "risk_level": a.risk_level,
-                    "risk_score": a.risk_score,
-                    "created_at": a.created_at.isoformat() if hasattr(a.created_at, 'isoformat') else str(a.created_at)
+                    "id": row[0],
+                    "business_name": row[1],
+                    "risk_level": row[2],
+                    "risk_score": float(row[3]) if row[3] else 0.0
                 }
-                for a in assessments
+                for row in assessments
             ],
             "message": "Recent assessments loaded successfully"
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error loading assessments: {str(e)}")
+        return {"success": False, "error": str(e)}
 
 @router.get("/debug/customers")
 async def debug_customers(db: AsyncSession = Depends(get_db)):
@@ -177,20 +176,23 @@ async def debug_customers(db: AsyncSession = Depends(get_db)):
     try:
         from sqlalchemy import text
         
-        # Check if table exists and get basic info
-        result = await db.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table' AND name='security_assessments'")
-        )
-        table_exists = result.scalar_one_or_none()
+        # Try multiple approaches to check table existence
+        try:
+            # Method 1: Try to count rows (works for both SQLite and PostgreSQL)
+            count_result = await db.execute(
+                text("SELECT COUNT(*) FROM security_assessments")
+            )
+            row_count = count_result.scalar_one()
+            table_exists = True
+        except Exception as e:
+            table_exists = False
+            row_count = 0
         
         if not table_exists:
-            return {"error": "security_assessments table does not exist"}
-        
-        # Get row count
-        count_result = await db.execute(
-            text("SELECT COUNT(*) FROM security_assessments")
-        )
-        row_count = count_result.scalar_one()
+            return {
+                "error": "security_assessments table does not exist or cannot be accessed",
+                "database_type": "PostgreSQL (likely on Render.com)"
+            }
         
         # Get sample data without datetime issues
         data_result = await db.execute(
@@ -204,7 +206,8 @@ async def debug_customers(db: AsyncSession = Depends(get_db)):
             "sample_data": [
                 {"id": row[0], "business_name": row[1], "business_email": row[2]} 
                 for row in sample_data
-            ]
+            ],
+            "database_type": "Connected successfully"
         }
         
     except Exception as e:
