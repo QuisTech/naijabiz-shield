@@ -247,3 +247,13 @@ async def get_customers_simple(db: AsyncSession = Depends(get_db)):
         
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@router.get("/debug/env")
+async def debug_environment():
+    """Check environment variables"""
+    import os
+    return {
+        "DATABASE_URL_exists": "DATABASE_URL" in os.environ,
+        "DATABASE_URL_value": os.getenv('DATABASE_URL', 'NOT_SET')[:50] + "..." if os.getenv('DATABASE_URL') else 'NOT_SET',
+        "current_database": "PostgreSQL" if os.getenv('DATABASE_URL') else "SQLite"
+    }
