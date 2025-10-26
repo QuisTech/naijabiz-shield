@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AssessmentSection, AssessmentAnswers } from '@/types/assessment';
 import { QuestionStep } from './QuestionStep';
 import { BusinessInfoStep } from './BusinessInfoStep';
 
 interface AssessmentFormProps {
   sections: AssessmentSection[];
-  onSubmit: (businessName: string, businessEmail: string, answers: AssessmentAnswers) => void; // UPDATED
+  onSubmit: (businessName: string, businessEmail: string, answers: AssessmentAnswers) => void;
   loading: boolean;
 }
 
@@ -18,14 +18,46 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [businessName, setBusinessName] = useState('');
-  const [businessEmail, setBusinessEmail] = useState(''); // NEW: Email state
+  const [businessEmail, setBusinessEmail] = useState('');
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [showBusinessInfo, setShowBusinessInfo] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const allQuestions = sections.flatMap(section => section.questions);
   const totalSteps = allQuestions.length + 1;
 
-  // UPDATED: Accept both name and email
+  // Auto-save progress
+  const autoSaveProgress = (currentAnswers: AssessmentAnswers) => {
+    localStorage.setItem('assessment_progress', JSON.stringify({
+      businessName,
+      businessEmail, 
+      answers: currentAnswers,
+      timestamp: Date.now()
+    }));
+  };
+
+  // Save progress when answers change
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      setHasUnsavedChanges(true);
+      autoSaveProgress(answers);
+    }
+  }, [answers, businessName, businessEmail]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved assessment progress. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Handle business info submission
   const handleBusinessInfoSubmit = (name: string, email: string) => {
     setBusinessName(name);
     setBusinessEmail(email);
@@ -41,8 +73,8 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // UPDATED: Pass email to onSubmit
-      onSubmit(businessName, businessEmail, answers);
+      // Use the new submit function with error handling
+      handleSubmitAssessment(businessName, businessEmail, answers);
     }
   };
 
@@ -52,6 +84,54 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
       setCurrentStep(0);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  // NEW: Enhanced submit function with error handling
+  const handleSubmitAssessment = async (name: string, email: string, assessmentAnswers: AssessmentAnswers) => {
+    try {
+      const data = {
+        business_name: name,
+        business_email: email,
+        answers: assessmentAnswers
+      };
+
+      const response = await fetch('https://naijabiz-shield.onrender.com/api/v1/security/assess', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to submit: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.detail || 'Submission failed');
+      }
+      
+      // Clear saved progress on success
+      localStorage.removeItem('assessment_progress');
+      setHasUnsavedChanges(false);
+      
+      // Success - pass data to parent component
+      onSubmit(name, email, assessmentAnswers);
+      
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Failed to save your assessment. Please try again. Your progress has been saved locally.');
+      
+      // Save to localStorage as backup
+      localStorage.setItem('pending_assessment', JSON.stringify({
+        businessName: name,
+        businessEmail: email,
+        answers: assessmentAnswers,
+        timestamp: Date.now(),
+        error: true
+      }));
     }
   };
 
