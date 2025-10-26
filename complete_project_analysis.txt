@@ -1,4 +1,4 @@
-PROJECT CODE ANALYSIS - Sun Oct 26 00:06:25 WCAST 2025
+PROJECT CODE ANALYSIS - Sun Oct 26 02:12:03 WCAST 2025
 ================================
 
 // ==== backend/app/api/__init__.py ====
@@ -177,11 +177,11 @@ async def generate_pdf_report(assessment_id: int, db: AsyncSession = Depends(get
 
 @router.get("/assessments")
 async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
-    """Get recent security assessments"""
+    """Get recent security assessments - SIMPLIFIED"""
     try:
         from sqlalchemy import text
         result = await db.execute(
-            text("SELECT id, business_name, risk_level, risk_score, created_at FROM security_assessments ORDER BY created_at DESC LIMIT 10")
+            text("SELECT id, business_name, risk_level, risk_score FROM security_assessments ORDER BY id DESC LIMIT 10")
         )
         assessments = result.fetchall()
         
@@ -189,19 +189,96 @@ async def get_recent_assessments(db: AsyncSession = Depends(get_db)):
             "success": True,
             "data": [
                 {
-                    "id": a.id,
-                    "business_name": a.business_name,
-                    "risk_level": a.risk_level,
-                    "risk_score": a.risk_score,
-                    "created_at": a.created_at.isoformat() if a.created_at else None
+                    "id": row[0],
+                    "business_name": row[1],
+                    "risk_level": row[2],
+                    "risk_score": float(row[3]) if row[3] else 0.0
                 }
-                for a in assessments
+                for row in assessments
             ],
             "message": "Recent assessments loaded successfully"
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error loading assessments: {str(e)}")
+        return {"success": False, "error": str(e)}
+
+@router.get("/debug/customers")
+async def debug_customers(db: AsyncSession = Depends(get_db)):
+    """Debug endpoint to see what's in the database"""
+    try:
+        from sqlalchemy import text
+        
+        # Try multiple approaches to check table existence
+        try:
+            # Method 1: Try to count rows (works for both SQLite and PostgreSQL)
+            count_result = await db.execute(
+                text("SELECT COUNT(*) FROM security_assessments")
+            )
+            row_count = count_result.scalar_one()
+            table_exists = True
+        except Exception as e:
+            table_exists = False
+            row_count = 0
+        
+        if not table_exists:
+            return {
+                "error": "security_assessments table does not exist or cannot be accessed",
+                "database_type": "PostgreSQL (likely on Render.com)"
+            }
+        
+        # Get sample data without datetime issues
+        data_result = await db.execute(
+            text("SELECT id, business_name, business_email FROM security_assessments LIMIT 5")
+        )
+        sample_data = data_result.fetchall()
+        
+        return {
+            "table_exists": True,
+            "total_assessments": row_count,
+            "sample_data": [
+                {"id": row[0], "business_name": row[1], "business_email": row[2]} 
+                for row in sample_data
+            ],
+            "database_type": "Connected successfully"
+        }
+        
+    except Exception as e:
+        return {"error": f"Database error: {str(e)}"}
+
+@router.get("/customers/simple")
+async def get_customers_simple(db: AsyncSession = Depends(get_db)):
+    """Simple customer data without complex processing"""
+    try:
+        from sqlalchemy import text
+        result = await db.execute(
+            text("""
+                SELECT id, business_name, business_email, business_type, 
+                       risk_level, risk_score
+                FROM security_assessments 
+                ORDER BY id DESC 
+                LIMIT 20
+            """)
+        )
+        assessments = result.fetchall()
+        
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": row[0],
+                    "business_name": row[1],
+                    "business_email": row[2],
+                    "business_type": row[3],
+                    "risk_level": row[4],
+                    "risk_score": float(row[5]) if row[5] else 0.0
+                }
+                for row in assessments
+            ],
+            "total": len(assessments)
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 // ==== backend/app/core/__init__.py ====
@@ -1099,14 +1176,14 @@ export default function Home() {
 // ==== frontend/components/assessment/AssessmentForm.tsx ====
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AssessmentSection, AssessmentAnswers } from '@/types/assessment';
 import { QuestionStep } from './QuestionStep';
 import { BusinessInfoStep } from './BusinessInfoStep';
 
 interface AssessmentFormProps {
   sections: AssessmentSection[];
-  onSubmit: (businessName: string, businessEmail: string, answers: AssessmentAnswers) => void; // UPDATED
+  onSubmit: (businessName: string, businessEmail: string, answers: AssessmentAnswers) => void;
   loading: boolean;
 }
 
@@ -1117,14 +1194,46 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [businessName, setBusinessName] = useState('');
-  const [businessEmail, setBusinessEmail] = useState(''); // NEW: Email state
+  const [businessEmail, setBusinessEmail] = useState('');
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [showBusinessInfo, setShowBusinessInfo] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const allQuestions = sections.flatMap(section => section.questions);
   const totalSteps = allQuestions.length + 1;
 
-  // UPDATED: Accept both name and email
+  // Auto-save progress
+  const autoSaveProgress = (currentAnswers: AssessmentAnswers) => {
+    localStorage.setItem('assessment_progress', JSON.stringify({
+      businessName,
+      businessEmail, 
+      answers: currentAnswers,
+      timestamp: Date.now()
+    }));
+  };
+
+  // Save progress when answers change
+  useEffect(() => {
+    if (Object.keys(answers).length > 0) {
+      setHasUnsavedChanges(true);
+      autoSaveProgress(answers);
+    }
+  }, [answers, businessName, businessEmail]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved assessment progress. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Handle business info submission
   const handleBusinessInfoSubmit = (name: string, email: string) => {
     setBusinessName(name);
     setBusinessEmail(email);
@@ -1140,8 +1249,8 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // UPDATED: Pass email to onSubmit
-      onSubmit(businessName, businessEmail, answers);
+      // Use the new submit function with error handling
+      handleSubmitAssessment(businessName, businessEmail, answers);
     }
   };
 
@@ -1151,6 +1260,54 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({
       setCurrentStep(0);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  // NEW: Enhanced submit function with error handling
+  const handleSubmitAssessment = async (name: string, email: string, assessmentAnswers: AssessmentAnswers) => {
+    try {
+      const data = {
+        business_name: name,
+        business_email: email,
+        answers: assessmentAnswers
+      };
+
+      const response = await fetch('https://naijabiz-shield.onrender.com/api/v1/security/assess', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to submit: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.detail || 'Submission failed');
+      }
+      
+      // Clear saved progress on success
+      localStorage.removeItem('assessment_progress');
+      setHasUnsavedChanges(false);
+      
+      // Success - pass data to parent component
+      onSubmit(name, email, assessmentAnswers);
+      
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Failed to save your assessment. Please try again. Your progress has been saved locally.');
+      
+      // Save to localStorage as backup
+      localStorage.setItem('pending_assessment', JSON.stringify({
+        businessName: name,
+        businessEmail: email,
+        answers: assessmentAnswers,
+        timestamp: Date.now(),
+        error: true
+      }));
     }
   };
 

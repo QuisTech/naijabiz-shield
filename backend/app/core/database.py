@@ -10,17 +10,21 @@ if not DATABASE_URL:
     # Fallback to SQLite for local development
     DATABASE_URL = "sqlite+aiosqlite:///./naijabiz_dev.db"
     connect_args = {"check_same_thread": False}
+    engine_kwargs = {"connect_args": connect_args, "echo": True}
 else:
+    # PostgreSQL connection settings
     connect_args = {}
+    engine_kwargs = {
+        "connect_args": connect_args,
+        "echo": True,
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_pre_ping": True
+    }
 
 engine = create_async_engine(
     DATABASE_URL,
-    connect_args=connect_args,
-    echo=True,  # Show SQL queries in console
-    # PostgreSQL connection settings
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True
+    **engine_kwargs
 )
 
 AsyncSessionLocal = sessionmaker(
