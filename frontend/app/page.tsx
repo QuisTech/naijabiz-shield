@@ -475,7 +475,7 @@ export default function Home() {
             <div>
               <h3 className="text-xl font-bold text-primary-500 mb-4">Contact Us</h3>
               <p className="text-gray-300">Email: info@naijabizshield.ng</p>
-              <p className="text-gray-300">Phone: +234 800 123 4567</p>
+              <p className="text-gray-300">Phone: +234 806 694 2864</p>
             </div>
           </div>
           
