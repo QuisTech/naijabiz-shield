@@ -480,7 +480,7 @@ export default function Home() {
           </div>
           
           <div className="border-t border-gray-600 pt-8 text-center">
-            <p className="text-gray-400">&copy; 2023 NaijaBiz Shield. All rights reserved.</p>
+            <p className="text-gray-400">&copy; 2024 InspireNova Enterprises. Built for Nigerian SMEs.</p>
           </div>
         </div>
       </footer>
