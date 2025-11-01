@@ -116,10 +116,6 @@ export default function SecurityAssessmentPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <Shield className="h-8 w-8 text-blue-400" />
-              <span className="ml-2 text-xl font-bold text-white">NaijaBiz Shield</span>
-            </Link>
           </div>
           <div className="flex items-center space-x-6">
             <Link href="/" className="nav-link flex items-center">
