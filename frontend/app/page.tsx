@@ -288,7 +288,8 @@ export default function Home() {
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                   <div className="lg:col-span-1">
                     <div className="bg-white p-6 rounded-lg shadow border">
-                      <h4 className="text-lg font-semibold mb-4">Add New Product</h4>
+                      {/* FIXED: Improved "Add New Product" heading visibility */}
+                      <h4 className="text-xl font-bold text-gray-900 mb-4">Add New Product</h4>
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
@@ -339,20 +340,21 @@ export default function Home() {
                           />
                         </div>
                         
-                        <button className="w-full bg-primary-500 text-white py-2 rounded hover:bg-primary-600 transition-colors">
+                        <button className="w-full bg-primary-500 text-white py-2 rounded hover:bg-primary-600 transition-colors font-semibold">
                           Add Product
                         </button>
                       </div>
 
                       <div className="mt-6">
-                        <h4 className="text-lg font-semibold mb-3">Business Health</h4>
+                        {/* FIXED: Improved "Business Health" heading visibility */}
+                        <h4 className="text-lg font-bold text-gray-900 mb-3">Business Health</h4>
                         <div className="bg-yellow-50 border-l-4 border-primary-500 p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <span>💡</span>
-                            <strong className="text-sm">AI Insight</strong>
+                            <strong className="text-sm text-gray-900">AI Insight</strong>
                           </div>
                           <p className="text-sm text-gray-700">
-                            Your best-selling product, <strong>Android Phones</strong>, is running low. Based on past sales, you might run out in 5 days.
+                            Your best-selling product, <strong className="text-gray-900">Android Phones</strong>, is running low. Based on past sales, you might run out in 5 days.
                           </p>
                         </div>
                       </div>
@@ -361,17 +363,18 @@ export default function Home() {
                   
                   <div className="lg:col-span-3">
                     <div className="bg-white p-6 rounded-lg shadow border">
-                      <h4 className="text-lg font-semibold mb-4">Product Inventory</h4>
+                      {/* FIXED: Improved "Product Inventory" heading visibility */}
+                      <h4 className="text-xl font-bold text-gray-900 mb-4">Product Inventory</h4>
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
                             <tr className="bg-gray-50">
-                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Product Name</th>
-                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Category</th>
-                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Cost Price</th>
-                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Selling Price</th>
-                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Stock Level</th>
-                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Status</th>
+                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">Product Name</th>
+                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">Category</th>
+                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">Cost Price</th>
+                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">Selling Price</th>
+                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">Stock Level</th>
+                              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900">Status</th>
                             </tr>
                           </thead>
                           <tbody>
