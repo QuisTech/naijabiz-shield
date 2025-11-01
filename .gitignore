@@ -39,3 +39,5 @@ Thumbs.db
 
 # Optional: coverage outputs
 coverage/
+__pycache__/
+*.pyc
