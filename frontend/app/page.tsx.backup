@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { Shield, AlertTriangle, FileText, TrendingUp, ArrowRight, CheckCircle } from 'lucide-react'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('cybersecurity')
@@ -32,9 +32,45 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-[#d74622] to-[#76127f] text-white shadow-lg">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Shield className="h-8 w-8" />
+              <div>
+                <h1 className="text-2xl font-bold">NaijaBiz Shield</h1>
+                <div className="text-sm opacity-90">Digital Armor for Nigerian SMEs</div>
+              </div>
+            </div>
+            
+            <nav className="flex flex-wrap justify-center gap-4 md:gap-6">
+              <Link href="#features" className="text-white hover:text-gray-200 font-medium transition-colors">
+                Features
+              </Link>
+              <Link href="#modules" className="text-white hover:text-gray-200 font-medium transition-colors">
+                Modules
+              </Link>
+              <Link href="#contact" className="text-white hover:text-gray-200 font-medium transition-colors">
+                Contact
+              </Link>
+            </nav>
+            
+            <div className="flex gap-2">
+              <button className="px-4 py-2 border border-white text-white rounded hover:bg-white hover:text-[#d74622] transition-colors">
+                Login
+              </button>
+              <Link href="/security-assessment" className="px-4 py-2 bg-white text-[#d74622] rounded hover:bg-gray-100 transition-colors font-semibold">
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-accent-red via-accent-purple to-accent-blue text-white py-16">
+      <section className="bg-gradient-to-r from-[#dd020f] via-[#76127f] to-[#0c22f1] text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">Protect Your Business. Boost Your Growth.</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
@@ -42,7 +78,7 @@ export default function Home() {
           </p>
           <Link 
             href="/security-assessment" 
-            className="bg-white text-primary-500 hover:bg-gray-100 text-lg px-8 py-3 rounded-full font-semibold inline-flex items-center gap-2 transition-colors"
+            className="bg-white text-[#d74622] hover:bg-gray-100 text-lg px-8 py-3 rounded-full font-semibold inline-flex items-center gap-2 transition-colors"
           >
             Start Free Assessment <ArrowRight className="w-5 h-5" />
           </Link>
@@ -52,7 +88,7 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-primary-500 mb-12">Why NaijaBiz Shield?</h2>
+          <h2 className="text-3xl font-bold text-center text-[#d74622] mb-12">Why NaijaBiz Shield?</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
@@ -61,7 +97,7 @@ export default function Home() {
               { icon: '📱', title: 'Local Context', desc: 'Built specifically for Nigerian business challenges, regulations, and connectivity issues.' },
               { icon: '📊', title: 'Business Intelligence', desc: 'AI-powered insights to help you make smarter decisions about inventory, sales, and growth.' }
             ].map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-lg border-t-4 border-primary-500 hover:transform hover:-translate-y-2 transition-transform duration-300">
+              <div key={index} className="bg-white p-6 rounded-lg shadow-lg border-t-4 border-[#d74622] hover:transform hover:-translate-y-2 transition-transform duration-300">
                 <div className="text-3xl mb-4">{feature.icon}</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
                 <p className="text-gray-600">{feature.desc}</p>
@@ -74,7 +110,7 @@ export default function Home() {
       {/* Modules Section */}
       <section id="modules" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-primary-500 mb-12">Our Core Modules</h2>
+          <h2 className="text-3xl font-bold text-center text-[#d74622] mb-12">Our Core Modules</h2>
           
           {/* Tabs */}
           <div className="flex justify-center border-b border-gray-200 mb-8">
@@ -88,7 +124,7 @@ export default function Home() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-3 font-semibold border-b-2 transition-colors ${
                   activeTab === tab.id 
-                    ? 'border-primary-500 text-primary-500' 
+                    ? 'border-[#d74622] text-[#d74622]' 
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -112,31 +148,31 @@ export default function Home() {
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.businessType}
                           onChange={(e) => handleInputChange('businessType', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select your business type</option>
-                          <option value="retail" className="text-gray-900">Retail/Shop</option>
-                          <option value="service" className="text-gray-900">Service Provider</option>
-                          <option value="restaurant" className="text-gray-900">Restaurant/Food Business</option>
-                          <option value="online" className="text-gray-900">Online Business</option>
-                          <option value="other" className="text-gray-900">Other</option>
+                          <option value="">Select your business type</option>
+                          <option value="retail">Retail/Shop</option>
+                          <option value="service">Service Provider</option>
+                          <option value="restaurant">Restaurant/Food Business</option>
+                          <option value="online">Online Business</option>
+                          <option value="other">Other</option>
                         </select>
                       </div>
                       
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Number of Employees</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.employees}
                           onChange={(e) => handleInputChange('employees', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select number of employees</option>
-                          <option value="1-5" className="text-gray-900">1-5</option>
-                          <option value="6-10" className="text-gray-900">6-10</option>
-                          <option value="11-20" className="text-gray-900">11-20</option>
-                          <option value="20+" className="text-gray-900">20+</option>
+                          <option value="">Select number of employees</option>
+                          <option value="1-5">1-5</option>
+                          <option value="6-10">6-10</option>
+                          <option value="11-20">11-20</option>
+                          <option value="20+">20+</option>
                         </select>
                       </div>
                       
@@ -148,7 +184,7 @@ export default function Home() {
                           Previous
                         </button>
                         <button 
-                          className="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors"
+                          className="px-4 py-2 bg-[#d74622] text-white rounded hover:bg-[#c13a18] transition-colors"
                           onClick={nextStep}
                         >
                           Next
@@ -161,41 +197,41 @@ export default function Home() {
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Do you accept online payments?</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.onlinePayments}
                           onChange={(e) => handleInputChange('onlinePayments', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select option</option>
-                          <option value="yes" className="text-gray-900">Yes</option>
-                          <option value="no" className="text-gray-900">No</option>
+                          <option value="">Select option</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
                         </select>
                       </div>
                       
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Do employees use personal phones for work?</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.personalPhones}
                           onChange={(e) => handleInputChange('personalPhones', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select option</option>
-                          <option value="yes" className="text-gray-900">Yes</option>
-                          <option value="no" className="text-gray-900">No</option>
-                          <option value="sometimes" className="text-gray-900">Sometimes</option>
+                          <option value="">Select option</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="sometimes">Sometimes</option>
                         </select>
                       </div>
                       
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Is your customer data stored digitally?</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.customerData}
                           onChange={(e) => handleInputChange('customerData', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select option</option>
-                          <option value="yes" className="text-gray-900">Yes</option>
-                          <option value="no" className="text-gray-900">No</option>
-                          <option value="partially" className="text-gray-900">Partially</option>
+                          <option value="">Select option</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="partially">Partially</option>
                         </select>
                       </div>
                       
@@ -207,7 +243,7 @@ export default function Home() {
                           Previous
                         </button>
                         <button 
-                          className="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors"
+                          className="px-4 py-2 bg-[#d74622] text-white rounded hover:bg-[#c13a18] transition-colors"
                           onClick={nextStep}
                         >
                           Next
@@ -220,42 +256,42 @@ export default function Home() {
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Do you enforce strong password policies?</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.passwordPolicy}
                           onChange={(e) => handleInputChange('passwordPolicy', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select option</option>
-                          <option value="yes" className="text-gray-900">Yes</option>
-                          <option value="no" className="text-gray-900">No</option>
-                          <option value="not-sure" className="text-gray-900">Not Sure</option>
+                          <option value="">Select option</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="not-sure">Not Sure</option>
                         </select>
                       </div>
                       
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Are staff trained to recognize phishing emails?</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.phishingTraining}
                           onChange={(e) => handleInputChange('phishingTraining', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select option</option>
-                          <option value="yes" className="text-gray-900">Yes</option>
-                          <option value="no" className="text-gray-900">No</option>
-                          <option value="partially" className="text-gray-900">Partially</option>
+                          <option value="">Select option</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="partially">Partially</option>
                         </select>
                       </div>
                       
                       <div className="form-group mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Do you have automatic data backups?</label>
                         <select 
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                           value={formData.dataBackups}
                           onChange={(e) => handleInputChange('dataBackups', e.target.value)}
                         >
-                          <option value="" className="text-gray-500">Select option</option>
-                          <option value="yes" className="text-gray-900">Yes</option>
-                          <option value="no" className="text-gray-900">No</option>
-                          <option value="manual" className="text-gray-900">Manual Backups Only</option>
+                          <option value="">Select option</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                          <option value="manual">Manual Backups Only</option>
                         </select>
                       </div>
                       
@@ -267,7 +303,7 @@ export default function Home() {
                           Previous
                         </button>
                         <button 
-                          className="px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors"
+                          className="px-4 py-2 bg-[#d74622] text-white rounded hover:bg-[#c13a18] transition-colors"
                           onClick={handleGenerateReport}
                         >
                           Generate Report
@@ -294,19 +330,19 @@ export default function Home() {
                           <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                           <input 
                             type="text" 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                             placeholder="Enter product name"
                           />
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                          <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900">
-                            <option value="" className="text-gray-500">Select category</option>
-                            <option value="electronics" className="text-gray-900">Electronics</option>
-                            <option value="clothing" className="text-gray-900">Clothing</option>
-                            <option value="food" className="text-gray-900">Food Items</option>
-                            <option value="other" className="text-gray-900">Other</option>
+                          <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent">
+                            <option value="">Select category</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="clothing">Clothing</option>
+                            <option value="food">Food Items</option>
+                            <option value="other">Other</option>
                           </select>
                         </div>
                         
@@ -315,7 +351,7 @@ export default function Home() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price (₦)</label>
                             <input 
                               type="number" 
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                               placeholder="0.00"
                             />
                           </div>
@@ -324,7 +360,7 @@ export default function Home() {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (₦)</label>
                             <input 
                               type="number" 
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                               placeholder="0.00"
                             />
                           </div>
@@ -334,19 +370,19 @@ export default function Home() {
                           <label className="block text-sm font-medium text-gray-700 mb-1">Initial Stock</label>
                           <input 
                             type="number" 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white text-gray-900"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#d74622] focus:border-transparent"
                             placeholder="0"
                           />
                         </div>
                         
-                        <button className="w-full bg-primary-500 text-white py-2 rounded hover:bg-primary-600 transition-colors">
+                        <button className="w-full bg-[#d74622] text-white py-2 rounded hover:bg-[#c13a18] transition-colors">
                           Add Product
                         </button>
                       </div>
 
                       <div className="mt-6">
                         <h4 className="text-lg font-semibold mb-3">Business Health</h4>
-                        <div className="bg-yellow-50 border-l-4 border-primary-500 p-4">
+                        <div className="bg-yellow-50 border-l-4 border-[#d74622] p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <span>💡</span>
                             <strong className="text-sm">AI Insight</strong>
@@ -382,15 +418,15 @@ export default function Home() {
                               { name: 'Air Conditioner', category: 'Electronics', cost: '₦120,000', price: '₦150,000', stock: 5, status: 'Low Stock', lowStock: true }
                             ].map((product, index) => (
                               <tr key={index} className="border-t">
-                                <td className="px-4 py-3 text-sm text-gray-900">{product.name}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{product.category}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{product.cost}</td>
-                                <td className="px-4 py-3 text-sm text-gray-900">{product.price}</td>
-                                <td className={`px-4 py-3 text-sm font-semibold ${product.lowStock ? 'text-accent-red' : 'text-gray-900'}`}>
+                                <td className="px-4 py-3 text-sm">{product.name}</td>
+                                <td className="px-4 py-3 text-sm">{product.category}</td>
+                                <td className="px-4 py-3 text-sm">{product.cost}</td>
+                                <td className="px-4 py-3 text-sm">{product.price}</td>
+                                <td className={`px-4 py-3 text-sm font-semibold ${product.lowStock ? 'text-[#dd020f]' : ''}`}>
                                   {product.stock}
                                 </td>
                                 <td className="px-4 py-3 text-sm">
-                                  <span className={product.lowStock ? 'text-accent-red font-semibold' : 'text-gray-900'}>
+                                  <span className={product.lowStock ? 'text-[#dd020f] font-semibold' : ''}>
                                     {product.status}
                                   </span>
                                 </td>
@@ -432,7 +468,7 @@ export default function Home() {
                       tip: 'Always verify payment details directly with vendors using previously established contact methods.'
                     }
                   ].map((alert, index) => (
-                    <div key={index} className="bg-yellow-50 border-l-4 border-primary-500 p-4">
+                    <div key={index} className="bg-yellow-50 border-l-4 border-[#d74622] p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span>{alert.icon}</span>
                         <strong className="text-gray-900">{alert.title}</strong>
@@ -451,17 +487,17 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer id="contact" className="bg-dark text-white py-12">
+      <footer id="contact" className="bg-[#111e2f] text-white py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-xl font-bold text-primary-500 mb-4">NaijaBiz Shield</h3>
+              <h3 className="text-xl font-bold text-[#d74622] mb-4">NaijaBiz Shield</h3>
               <p className="text-gray-300">Digital protection and business management tools designed specifically for Nigerian SMEs.</p>
               <p className="text-gray-300 mt-2">Abuja, Nigeria</p>
             </div>
             
             <div>
-              <h3 className="text-xl font-bold text-primary-500 mb-4">Modules</h3>
+              <h3 className="text-xl font-bold text-[#d74622] mb-4">Modules</h3>
               <ul className="space-y-2">
                 <li><Link href="/security-assessment" className="text-gray-300 hover:text-white transition-colors">Cybersecurity Assessment</Link></li>
                 <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Inventory Management</a></li>
@@ -470,7 +506,7 @@ export default function Home() {
             </div>
             
             <div>
-              <h3 className="text-xl font-bold text-primary-500 mb-4">Contact Us</h3>
+              <h3 className="text-xl font-bold text-[#d74622] mb-4">Contact Us</h3>
               <p className="text-gray-300">Email: info@naijabizshield.ng</p>
               <p className="text-gray-300">Phone: +234 800 123 4567</p>
             </div>
